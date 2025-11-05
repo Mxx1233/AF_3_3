@@ -1,0 +1,14 @@
+= Allgemeine Informationen
+:toclevels: 1
+
+Generelle Informationen und eine Dokumentation für das PSAF ist unter https://git-ce.rwth-aachen.de/af/psaf-1/psaf-1_documentation/-/jobs/artifacts/main/raw/Dokumentation/PS_AF_1.pdf?job=Pdf[PS_AF_1.pdf] im Repository https://git-ce.rwth-aachen.de/af/psaf-1/psaf-1_documentation[PS AF 1 - Dokumentation] zu finden.
+Weiteres Material ist im Repository https://git-ce.rwth-aachen.de/af/infos[Allgemeine Informationen] gegeben.
+
+Weitere nennenswerte Repositories zum Projektseminar Autonomes Fahren sind folgende:
+
+* `af/psaf_ucbridge`: Node, der die Kommunikation mit dem Fahrzeug über ROS herstellt.
+  Hilfreich ist hier möglicherweise die in der README gegebene Übersicht über die Nachrichten, die mit diesem Node ausgetauscht werden können.
+* `af/images`: Enthält die Packer- und Ansible-Dateien, mit denen die Fahrzeuge sowie die VM und die Docker-Container aufgesetzt sind.
+  Hilfreich, wenn man die Installation nachvollziehen oder auf dem eigenen Rechner nachbilden möchte.
+  (Allerdings ist die Verwendung der VM oder der Docker-Container empfohlen.)
+* `af/pycamcal`: Skript in Python, dass zur Kalibrierung der Kamera verwendet werden kann.

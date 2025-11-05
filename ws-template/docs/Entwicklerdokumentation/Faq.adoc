@@ -1,0 +1,92 @@
+= Bekannte Probleme und FAQ
+:toclevels: 1
+
+== Bauen des Workspaces
+
+
+
+=== Fehlermeldung: Fehlende `uc_bridge`
+
+Dieser Fehler sollte bei den zur Verfügung gestellten Fahrzeugen und der zur Verfügung gestellten VM nicht auftreten.
+
+Diese Fehlermeldung kann mehre Ursachen haben. Zuerst sollte überprüft werden, ob die `uc_bridge` auf dem Computer vorhanden sind und gebaut wurden.
+
+Über die Ausgabe folgender Befehle kann dies überprüft werden:
+
+    find psaf_ucbridge/install
+
+Falls die Ausgabe `find: 'psaf_ucbridge/install': No such file or directory` in der Konsole steht, so ist das entsprechende Paket nicht installiert.
+Eine Installationsanleitung für die beiden Pakete ist im Abschnitt xref:Setup.adoc[Setup] zu finden.
+
+[#img-error_libpsaf]
+.Fehlermeldung libpsaf
+image::error_libpsaf.png[]
+
+'''
+
+Falls beide Ordner gefunden werden, kann der Fehler durch das fehlende "sourcen" der Pakete verursacht werden.
+In diesem Fall muss man folgende Befehle ausführen:
+
+    cd ~/library/
+    source install/local_setup.bash
+    cd ..
+    cd ~/psaf_ucbridge/
+    source install/local_setup.bash
+
+Dieser Schritt muss jedes Mal wiederholt werden, wenn ein neues Konsolenfenster geöffnet wird.
+Um dies zu vermeiden, kann der Befehl auch in die `bashrc` Datei eingefügt werden.
+Hierfür muss die `bashrc` Datei zunächst geöffnet werden:
+
+    gedit ~/.bashrc
+
+In der Datei die beiden source Befehle einfügen und speichern.
+Anschließend muss das Terminal neu gestartet werden.
+
+[#img-error_libpsaf_2]
+
+
+== Fehlermeldung: cv_bridge: No such file or directory
+
+Dieser Fehler sollte bei den zur Verfügung gestellten Fahrzeugen und der zur Verfügung gestellten VM nicht auftreten.
+
+Bei der ROS2 Installation werden unter Umständen nicht alle benötigten Pakete installiert.
+Um die genannte Fehlermeldung zu beseitigen, können folgende Befehle ausgeführt werden:
+
+    cd ~/ros2_jazzy/src
+    git clone https://github.com/ros-perception/vision_opencv
+    cd vision_opencv
+    git checkout ros2
+    colcon build --symlink-install
+
+[IMPORTANT]
+Vor dem Builden ist ggf. noch in der `CMakeLists.txt` von `vision_opencv` die zu verwendende Version von OpenCV explizit anzugeben.
+
+Anschließend muss die Installation noch gesourced werden:
+
+    source install/local_setup.bash
+
+Alternativ kann der Befehl auch in die `bashrc` Datei eingefügt und ein neues Terminal geöffnet werden.
+
+[#img-error_cvbridge]
+.Fehlermeldung cv_bridge
+image::error_cvbridge.png[]
+
+== Fehlermeldung: "permission denied <filename>"
+
+Falls in der CI-Pipeline die Fehlermeldung auftritt, dass der Zugriff auf ein Skript (.sh) oder eine Python-Datei (.py) nicht erlaubt ist, kann der Fehler wie folgt behoben werden. (Die Datei muss sich bereits im GitLab Repository befinden.)
+
+. Öffnen eines Terminals
+. Eingabe:
+
+    git update-index --chmod=+x <filename>
+    git commit -m "Changed permission"
+    git push
+
+
+== Welche Schilder müssen erkannt werden?
+
+Die Schilder sind von den Regularien des Carolo Cups vorgegeben.  xref:img-signs_carolo_cup[Die Abbildung "Schilder"] zeigt die im Carolo Cup vorhandenen Schilder.
+
+[#img-signs_carolo_cup]
+.Die Schilder des Carolo Cups
+image::signs.png[]

@@ -1,0 +1,29 @@
+= Entwicklerdokumentation für die Workspace-Vorlage
+:icons: font
+:compat-mode!:
+:toc: left
+:toclevels: 2
+:imagesdir: ./images/
+
+Diese Dokumentation enthält Informationen über den Workspace für das Projektseminar Autonomes Fahren (PSAF).
+Die Dokumentation ist wie folgt aufgebaut:
+
+In xref:Allgemein.adoc[allgemeine Informationen] werden allgemeine Informationen über das Seminar gegeben.
+
+Das Kapitel xref:Setup.adoc[Setup] beschreibt die Voraussetzungen an das System, damit dieser Workspace ausgeführt werden kann.
+
+Der in diesem Workspace implementierte Node `first_steps` dient als Schnelleinstieg in die Programmierung in ROS2 und der Kommunikation mit dem Fahrzeug.
+Dieser kann auch unabhängig von dem Fahrzeug erstellt und ausgeführt werden, wobei dieser (mangels der fehlenden Topics des Fahrzeuges) keine sinnvolle Funktionalität bereitstellen kann.
+
+Im Kapitel xref:Testen.adoc[Testen] wird eine allgemeine Übersicht über die Rahmen des Projektseminars erwarteten Tests sowie Erläuterungen zu CI-Pipeline gegeben.
+
+Im Abschnitt xref:Faq.adoc[FAQ] werden Fragen und Antworten zu den Paketen bereitgestellt sowie Lösungen für die häufigsten Probleme aufgezeigt.
+
+[WARNING]
+Diese Dokumentation ist im Rahmen des Seminars von den Studierenden entsprechend anzupassen.
+
+
+include::Allgemein.adoc[leveloffset=1]
+include::Testen.adoc[leveloffset=1]
+include::Setup.adoc[leveloffset=1]
+include::Faq.adoc[leveloffset=1]

@@ -1,0 +1,364 @@
+= Erste Schritte
+
+Diese Erläuterung beschreibt die erste Inbetriebnahme des Fahrzeuges.
+
+
+== Update
+
+Diese Anleitung ist mit folgender Version `ucbridge` getestet:
+
+* `ucbridge`: 2.3.3
+
+
+=== Update ws-template
+
+Dieser Workspace kann einfach geupdatet werden, indem der aktuelle Stand über git gepullt wird.
+
+
+=== Update der `ucbridge`
+
+Die `ucbridge` wird über ein Debian-Paket bereitgestellt.
+
+Um zu prüfen, in welcher Version es verwendet wird, kann der Befehl
+```
+sudo dpkg -l | grep psaf
+```
+verwendet werden.
+
+Um eine neue Version zu installieren, müssen die alte Pakete über
+```
+sudo dpkg -r ros-jazzy-psaf-ucbridge
+sudo dpkg -r ros-jazzy-psaf-ucbridge-msgs
+```
+deinstalliert werden.
+Eine genaue Version muss hierbei nicht angegeben werden.
+
+Die neuen Pakete werden dann über z.B.
+```
+sudo dpkg -i ros-jazzy-psaf-ucbridge-msgs_2.3.3-0noble_amd64.deb 
+sudo dpkg -i ros-jazzy-psaf-ucbridge_2.3.3-0noble_amd64.deb 
+```
+(Reihenfolge beachten!) installiert.
+Dabei wird davon ausgegangen, dass die entsprechenden deb-Dateien über die Release-Seite des entsprechenden GitLab-Repositories heruntergeladen sind und man sich im Terminal in dem Pfad befindet, in dem auch diese Dateien liegen.
+
+
+
+== Erste Inbetriebnahme
+
+Es sind verschiedene Launch-Files zur Verfügung gestellt, die später den Systemstart erleichtern.
+Um den Aufbau aber zunächst kennenzulernen, beginnen wir damit, die wesentlichen Nodes einzeln zu starten.
+
+Das Fahrzeug sollte hierzu aufgebockt werden (z.B. einfach auf die Kamera-Packung stellen), so dass die Räder frei gelenkt und vom Motor gedreht werden können.
+Das Fahrzeug sollte an das Netzteil angeschlossen sein.
+
+Es wird davon ausgegangen, dass der Template-Workspace in `~/ws-template` geclont ist, in das wir jetzt wechseln:
+```
+cd ws-template/
+```
+
+
+=== Workspace oder einzelne Pakete bauen
+
+Wenn der Workspace neu geclont wurde (oder die `libpsaf` geupdated wurde), muss er einmal neu gebaut werden.
+Dies funktioniert über
+```
+colcon build --symlink-install
+```
+
+Später können dann auch einzelne Pakete neu gebaut werden.
+Dies funktioniert z.B. über
+```
+colcon build --symlink-install --packages-select psaf_controller
+```
+
+Bevor die Packages und Nodes des ws-template Workspaces genutzt werden können, muss der Workspace gesourct werden:
+```
+source install/local_setup.bash
+```
+Dies muss im Weiteren Verlauf bei jedem Start eines neues Terminals gemacht werden.
+Alternativ kann man
+```
+source ~/ws-template/install/local_setup.bash
+```
+am Ende der Datei `~/.bashrc` anfügen.
+Dann muss nur noch manuell gesourct werden, wenn sich durch einen Build etwas an der Struktur des Workspaces geändert hat.
+
+
+=== Direkte Kommunikation mit dem Fahrzeug
+
+Dies ist hier nur ein kurzer Einschub für Interessierte, der Hintergrundinformationen liefert.
+Für die Durchführung des Projektseminars sollten diese nicht relevant sein.
+
+Die Kommunikation mit dem Fahrzeug findet über eine serielle Verbindung über USB statt.
+Diese Kommunikation ist textbasiert und in der Dokumentation zum `ucboard` (nicht `ucbridge`) beschrieben.
+
+Wenn man diese ausprobieren will (hierzu müsste auch weder `ROS2`, noch die `ucbridge` oder die `libpsaf` installiert sein), kann man über ein entsprechendes Terminalprogramm (z.B. `moserial`, über die Ubuntu-Paketverwaltung zu installieren) eine Verbindung herstellen:
+
+* Baudrate: 961000
+* Datenbits: 8
+* Stopbits: 1
+* Parity: keine
+* Flowcontrol (Handshake): Software
+
+Am Ende einer eingegebenen Nachricht muss `<LF>` (`\n`) gesendet werden.
+
+Dann kann z.B. mit
+```
+?ver
+```
+die Version der Firmware abgefragt werden.
+Mit
+```
+!steer -300
+```
+wird der Wert `-300` für die Lenkung eingestellt.
+
+Mit
+```
+!drv f 200
+```
+sollten sich die Räder vorwärts, und mit
+```
+!drv b 200
+```
+rückwärts drehen.
+Mit
+```
+!drv f 0
+```
+wird der Motor angehalten.
+
+Die vollständige Definition der Kommunikation ist in der Dokumentation des `ucboards` definiert.
+
+Während die Befehle zum Setzen des Lenk- und Motorwertes noch sehr einfach sind, wird das (ständige) Auslesen der Sensorwerte etwas aufwendiger.
+Auch muss beachtet werden, dass nur eine Verbindung über die serielle Schnittstelle geöffnet werden kann.
+Die `ucbridge` vereinfacht die Kommunikation mit dem Fahrzeug erheblich, indem sie die gesamte Kommunikation mit dem `ucboard` übernimmt und diese über entsprechende Schnittstellen in Form von ROS-Topics zur Verfügung stellt.
+
+
+=== Kommunikation über ucbridge
+
+Zunächst soll nur die `ucbridge` gestartet werden:
+```
+ros2 launch psaf_launch ucbridge_old.launch.py
+```
+(Wenn nicht explizit anders geschrieben, wird immer davon ausgegangen, dass man sich in einem Terminal im Verzeichnis `~/ws-template` befinden und der Workspace gesourct ist.)
+
+Der Name `ucbridge_old` ist etwas ungünstig gewählt: Dieser bezeichnet die Konfiguration zu den PSAF-1-Fahrzeugen, während `ucbridge_new` die zu dem PSAF-2-Fahrzeug bezeichnet.
+Technisch sind die Boards jedoch fast identisch.
+
+Der entsprechende Node sollte starten, und ein paar Log-Meldungen angezeigt werden.
+Es dürften keine Warnung oder Fehler angezeigt werden.
+
+Falls dies doch der Fall ist, kann folgendes geprüft werden:
+
+* Die orangene LED "SYS" auf dem ucboard sollte mit 1 Hz blinken.
+* Blinkt diese gar nicht, ist zu prüfen, ob die Spannung korrekt angeschlossen ist.
+(Das Netzteil ist in die Buchse am Fahrzeug einzustecken, und nicht direkt an der Platine des Rechners.)
+* Blinkt diese zusammen mit der roten LED "DRVBAT" (ein dauerhaftes Leuchten der LED "DRVBAT" ist kein Fehler, sondern zeigt an, dass der Motor freigegegen ist), so ist das `ucboard` abgestürzt.
+In diesem Fall sollte der Node über CTRL+C gestoppt werden, und das `ucboard` über den kleinen schwarzen Taster direkt neben dem Quarz neu gestartet werden.
+(Es ist nicht nötig, das gesamte Fahrzeug von der Spannung zu trennen.)
+Wenn dann der Node wieder gestartet wird, sollte es sich korrekt verbinden.
+* Das USB-Kabel muss eingesteckt sein.
+
+Wenn jetzt ein zweites Terminal geöffnet (und der Workspace gesourct) wird, sollte man mit
+```
+ros2 topic list
+```
+eine Menge an Topics sehen.
+
+Mit
+```
+ros2 topic echo /hall_cnt_data
+```
+kann man sich z.B. das Topic ausgeben lassen, dass die Impulse des Drehgebers am hinteren linken Rad ausgibt.
+Dreht man das Rad (ggf. muss es dabei etwas näher an die Karosserie gedrückt werden, da der Abstand zwischen Sensor und Magnet im aufgebockten Zustand etwas groß ist), so sollte man die sich inkrementierenden Werte des Zählers sehen.
+
+Mit
+```
+ros2 topic info /uc_bridge/set_steering
+```
+kann man z.B. in Erfahrung bringen, welchen Datentyp ein Topic hat, und ob die `ucbridge` dieses Topic veröffentlicht oder dieses abonniert hat.
+
+Das Senden von Daten eines Topics über die Konsole ist etwas aufwändiger:
+
+* Folgender Befehl bewegt die Lenkung:
++
+```
+ros2 topic pub /uc_bridge/set_steering std_msgs/msg/Int16 "data: 200"
+```
++
+Dabei wird jede Sekunde ein Wert über das angegebene Topic gepublisht.
+
+* Folgender Befehl lässt den Motor ruckweise drehen
++
+```
+ros2 topic pub /uc_bridge/set_motor_level_forward std_msgs/msg/Int16 "data: 200"
+```
++
+Das "ruckweise" liegt daran, dass bei die Motorsteuerung auf dem `ucboard` eine Totmannschaltung verwendet.
+Kommt für 200 ms kein neuer Wert, wird der Motor abgeschaltet.
+(Dieses Verhalten kann über die Parameter der `ucbridge` geändert werden.)
+
+* Folgender Befehl lässt den Motor flüssig drehen, da mit `-r 10` eine Frequenz von 10 Hz vorgegeben wird:
++
+```
+ros2 topic pub -r 10 /uc_bridge/set_motor_level_forward std_msgs/msg/Int16 "data: 200"
+```
+
+==== Testen der Sensoren
+
+An dieser Stelle bietet es sich an, alle Sensoren des Fahrzeuges einmal zu testen.
+Hierzu können sich die zu den einzelnen Sensoren genannten Topics über `ros2 topic echo [...]` angeschaut werden.
+
+* Drehgeber Rad
++
+```
+/hall_cnt_data
+```
++
+Diesen haben wir gerade schon getestet.
+Alternativ können wir uns hier auch die Topics `/dt_data` oder `/dt8_data` anschauen.
+(Diese Topics sind "ereignisgesteuert": Das Rad muss per Hand (oder Motor) gedreht werden, damit Werte angezeigt werden.)
+
+* IMU (Beschleunigungssensor)
++
+```
+/imu_data
+```
++
+Hier muss man wahrscheinlich das Terminal-Fenster etwas größer ziehen.
+Es werden sowohl die linearen Beschleunigungen als auch die Winkelgeschwindigkeiten angezeigt.
+Die Werte der Kovarianzmatrizen sind hier immer `0.0`.
+Die anderen Werte sollten verrauscht sein.
+Der Beschleunigungswert in z-Richtung ist ca. 9,81 (= 1g).
+Bewegt man das Fahrzeug, dann sollte sich diese Bewegung in den Werten zeigen.
+Insbesondere sollte sich ein Drehen des Fahrzeuges in der Winkelgeschwindigkeit der z-Achse zeigen.
+
+* Batteriespannungen
++
+```
+/vbat_data
+```
++
+Dieses Topic gibt zwei Werte zurück: Die Spannung des LiFe-Akkus für die Boards (`vsbat`) und die Spannung des NiMH-Akkus für den Motor (`vdbat`).
+
+* Ultraschallsensoren
++
+```
+/uc_bridge/us_mid_left
+/uc_bridge/us_front_center
+/uc_bridge/us_mid_right
+```
++
+Diese Topics geben jeweils den Wert eines US-Sensors mit einer Menge an weiteren Daten aus.
+Hier sind wir nur an dem Abstand interessiert, der im `range`-Feld ausgegeben wird.
+Wenn man sich ein Topic ansieht, so sollte sich der Wert entsprechend ändern, wenn man die Hand in unterschiedlichen Abständen vor den entsprechenden Sensor hält.
++
+`0.0`-Werte sind Fehlerwerte.
+Diese können auftreten, wenn der zu messende Abstand zu groß oder zu klein ist.
+(Falls dies unerwartet auftritt kann geprüft werden, ob der Sensor in der Halterung zu weit verrutscht ist.)
+
+* Tasten
++
+```
+/pb_data
+```
++
+Dieses Topic gibt den Zustand der drei kleinen Taster A, B und C aus, die sich hinten an dem `ucboard` befinden.
+Beim Drücken des Tasters wird der Wert um 1 inkrementiert, beim Loslassen ebenso.
+Damit bedeutet ein ungerader Wert, dass der Taster gerade gedrückt wird.
+Es handelt sich um einen `uint8_t`-Wert, d.h. nach 255 geht es wieder bei 0 weiter.
+
+* Magnetsensor
++
+```
+/mag_data
+```
++
+Kann man sich anzeigen lassen, jedoch können diese Werte nicht sinnvoll für die Aufgaben des PSAF-1 verwendet werden.
+
+
+=== Verwendung des Beispielsnodes `psaf_firststeps`
+
+Als letzte Stufe betrachten wir jetzt die Verwendung des Nodes `psaf_firststeps`, der als Beispiel und Vorlage dient, einen Node, der über Topics mit der `ucbridge` kommuniziert, erstellen kann.
+Die `ucbridge` wird weiterhin verwendet, so dass wir den Node laufen lassen können.
+Werden noch manuell Topics gepublisht, wäre dies jetzt aber zu beenden.
+
+Dieser verfügt schon über einen Test, den wir aktivieren können, indem wir in der Datei `src/psaf_firststeps/include/psaf_firststeps/firststeps_node.hpp` die Präprozessor-Konstante `TESTING` auf `true` setzen.
+(Dies sollte auch der Fall sein, wenn Sie den Workspace neu geclont haben.)
+
+Danach muss das Package neu gebaut werden:
+```
+colcon build --symlink-install --packages-select psaf_firststeps
+```
+
+Danach kann der Node mit
+```
+ros2 launch psaf_firststeps firststeps.launch.py
+```
+gestartet werden.
+
+Es sollten fortlaufend Nachrichten auf der Konsole ausgegeben werden.
+Dabei wird für jeden der drei Ultraschallsensoren eine "1" ausgegeben, wenn dieser einen Wert von kleiner als 10cm zurückliefert, ansonsten eine "0".
+Außerdem wird der Hinweis angezeigt, dass über das Drücken des Tasters "A" auf dem *ucboard* ein Testzyklus gestartet und gestoppt werden kann.
+Drückt man diesen Taster (und lässt ihn dann auch wieder los) sollten sich die Räder zunächst rückwärts (beim ersten Durchlauf der Sequenz kann es ein wenig dauern, bis sich die Räder drehen) und dann vorwärts drehen, und im Anschluss sollte sich die Lenkung von links nach rechts bewegen.
+Der Node kann mit CTRL+C abgebrochen werden.
+
+Man kann sich auch während des Tests in einem anderen Terminal mit `ros2 topic echo [...]` die veröffentlichten Motor- und Lenkungswerte ansehen.
+
+
+== Realsense
+
+Hier kann (muss aber nicht) der `ucbridge`-Node zunächst wieder gestoppt werden.
+(Das macht es einfacher, die Topics der Kamera zu erkennen.)
+
+* Starten der Kamera
++
+```
+ros2 launch psaf_launch realsense2_camera_455.launch.py
+```
++
+Beim Starten des Kamera-Nodes können durchaus einige Warnungen und Fehler in der Konsole angezeigt werden.
++
+Es gibt zwei Versionen der Realsense-Kamera, die vorhanden sind.
+Die D455 ist die aktuelle "Standardkamera", D435 das Vorgängermodell.
+Die D455 ist etwas breiter und hat die Buchse für das USB-Kabel unten, während bei der D435 der Stecker an der Seite eingesteckt wird.
+Sollte die D435 verwendet werden, ist der Name des Launch-Files entsprechend anzupassen.
+
+* Jetzt sollten Kameradaten gepublisht werden (`ros2 topic list`), und man kann prüfen, ob auch Nachrichten geschickt werden:
++
+```
+ros2 topic echo --no-arr /camera/realsense2_camera_node/color/image_raw
+```
+
+* Eine Möglichkeit, das Kamerabild anzuschauen, ist über `rviz2`.
+Dies ist das allgemeine Visualierungstool von ROS, um sich Sensordaten anzusehen.
+--
+** Starten von rviz2: `rviz2`
+** Add (Schaltfläche unten links) -> Camera -> Ok
+** In der Baumstruktur links:
+*** Camera -> Topic -> `/camera/realsense2_camera_node/color/image_raw`
+*** Global Options -> Fixed Frame -> `_color_frame`
+-- 
+Das Bild der Kamera sollte jetzt links unten angezeigt werden.
+
+* Alternativ gibt es das ROS-Paket `image-view`, welches dazu verwendet werden kann, `image`-Topics anzuzeigen (allerdings etwas langsamer als `rviz2` und mit merklicher Verzögerung):
++
+```
+ros2 run image_view image_view --ros-args --remap image:=/camera/realsense2_camera_node/color/image_raw
+```
+
+
+== Weitere Schritte
+
+Von hier aus kann man jetzt sich weiter mit der Struktur des `ws-template`-Workspaces vertraut machen.
+
+Auf Dauer ist es ungünstig, immer alle Nodes per Hand in einem eigenen Terminal zu starten.
+Hier nehmen die Launch-Files viel Arbeit ab.
+Bei dem Workspace ist auch Launch-Files dabei, das alle Nodes zusammen startet:
++
+```
+ros2 launch psaf_launch main_psaf1.launch.py
+```
+
+Während der Entwicklungsphase ist es auch sinnvoll, sich selber passende Launch-Files zu schreiben, die eine für die aktuelle Aufgabe passende Untermenge der Nodes starten.
