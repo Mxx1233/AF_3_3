@@ -1,9 +1,9 @@
 = "Rusty Racer" Team-Arbeits-Charta (Team Charter)
 :author: Shengtao Wen
 :group: Gruppe C - Rusty Racer
-:revnumber: 0.1.0
+:revnumber: 0.2.0
 :revdate: 2025-11-06
-:revremark: Erste Version der Team-Charta.
+:revremark: Den Abschnitt "Unser Branching-Modell (Git-Flow)" hinzugefügt.
 :toc: left
 :toclevels: 2
 :sectnums:
@@ -15,6 +15,7 @@ IMPORTANT:: Dieses Dokument ist unsere verbindliche Arbeitsgrundlage. Jedes Mitg
 |===
 | Version | Date       | Remark
 | 0.1.0   | 2025-11-06 | Erste Version der Team-Charta.
+| 0.2.0   | 2025-11-06 | Den Abschnitt "Unser Branching-Modell (Git-Flow)" hinzugefügt.
 |===
 
 == Kernprinzipien
@@ -92,6 +93,40 @@ Der Lebenszyklus eines Issues wird über das Issue Board visualisiert und gesteu
 . *Done (Erledigt):* Der Merge Request wird erfolgreich gemerged. -> Das Issue wird (automatisch) geschlossen und erscheint in dieser Spalte.
 
 == Git & Merge Request (MR) Prozess
+
+=== Unser Branching-Modell (Git-Flow)
+
+Wir folgen einem strikten Git-Flow-Workflow, der auf langlebigen und kurzlebigen Branches basiert. Das Verständnis der Rollen dieser Branches ist entscheidend für eine reibungslose Zusammenarbeit.
+
+. *`main`-Branch:*
++
+--
+* *Zweck:* Produktions-Branch. Enthält ausschließlich stabile, getestete und release-fähige Versionen des Projekts.
+* *Regeln:*
+** **Direktes Pushen ist strengstens verboten.**
+** Code gelangt in diesen Branch nur durch Merges aus einem `release`- oder `hotfix`-Branch. (Für dieses Projektseminar vereinfacht: durch Merges aus dem `develop`-Branch am Ende von Meilensteinen).
+--
+
+. *`develop`-Branch:*
++
+--
+* *Zweck:* Integrations-Branch. Dies ist die Hauptentwicklungs-Linie, die alle abgeschlossenen Features für das nächste Release sammelt.
+* *Regeln:*
+** **Direktes Pushen ist strengstens verboten.**
+** Der `develop`-Branch sollte jederzeit kompilierbar sein und alle Tests bestehen.
+** Code gelangt in diesen Branch ausschließlich durch das Mergen von `feature`-Branches.
+--
+
+. *`feature/*`-Branches:*
++
+--
+* *Zweck:* Entwicklung neuer Funktionen oder Bearbeitung spezifischer Tasks. Hier findet der Großteil der täglichen Arbeit statt.
+* *Lebenszyklus:*
+. **Erstellung:** Ein `feature`-Branch wird **immer** vom aktuellen `develop`-Branch abgezweigt (`git checkout -b feature/... develop`).
+. **Entwicklung:** Alle Commits für die Aufgabe werden in diesem Branch gemacht.
+. **Abschluss:** Wenn die Funktion fertig ist, wird der Branch über einen Merge Request zurück in den `develop`-Branch gemerged.
+. **Löschung:** Nach dem erfolgreichen Merge wird der `feature`-Branch gelöscht.
+--
 
 === Branch- und Commit-Konventionen
 
