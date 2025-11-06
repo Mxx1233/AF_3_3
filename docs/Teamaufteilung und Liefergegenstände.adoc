@@ -1,0 +1,86 @@
+= Teamaufteilung und Liefergegenstände (6 Mitglieder)
+:author: Shengtao Wen
+:revnumber: 0.1.0
+:revdate: 2025-11-6
+:revremark: Erste Version basierend auf der initialen Team-Diskussion.
+:status: Entwurf (Draft)
+
+
+[frame=topbot,grid=rows,cols="1,2,6"]
+|===
+| Version | Date       | Remark
+| 0.1.0   | 2024-10-26 | Erste Version basierend auf der initialen Team-Diskussion.
+|===
+
+IMPORTANT:: Dieses Dokument stellt die anfängliche Planung für die Team-Aufgabenverteilung dar. Es dient als lebendes Dokument und wird im Laufe des Projekts entsprechend dem Fortschritt und den auftretenden Herausforderungen angepasst. Alle Mitglieder werden über wesentliche Änderungen informiert.
+
+[cols="1,3,4,4,1"]
+|===
+| Rolle | Kernverantwortlichkeit (Core Responsibility) | Hauptaufgaben (Key Tasks) | Liefergegenstände (Key Deliverables) |
+Stichwörter
+
+| *Teamleiter / Systemarchitekt*(1 Person)
+| Sicherstellung der Projektrichtung, des Fortschritts, der Modulintegration und der Qualität.
+|
+* *Projektplanung:* Issues in GitLab pflegen, Fortschritt verfolgen, Meetings leiten.
+* *Systemintegration:* ROS2 Launch-Dateien erstellen und pflegen.
+* *Git-Management:* Merge Requests überprüfen und zusammenführen (Code Reviews).
+* *Dokumentation:* Endgültige Ausarbeitung zusammenstellen und einreichen.
+|
+* Ein gut gepflegtes GitLab Issue Board.
+* Ein klares Systemarchitektur-Diagramm (ROS-Knoten/Topics).
+* `*.launch.py`-Dateien zum Starten des Gesamtsystems.
+* Eine vollständige, formatierte finale Ausarbeitung.
+|
+Projektmanagement, Systemintegration, Git-Flow & CI/CD, Qualitätskontrolle, Dokumentation
+
+| *Low-Level &Zustandsschätzung*(1 Person)
+| Schaffung eines stabilen "digitalen Zwillings" des Fahrzeugs, der präzise Zustandsinformationen für übergeordnete Anwendungen bereitstellt.
+|
+* *Schnittstellen-Wartung:* Stabilität des `uc_bridge`-Knotens sicherstellen, Debugging von Kommunikationsproblemen.
+* *Sensordaten-Verarbeitung:* Aufbereitung von IMU- und Hall-Sensor-Daten.
+* *Zustandsschätzung:* **Implementierung eines Kalman-Filters (EKF)** zur Fusion von Rad-Odometrie, IMU und visueller Lokalisierung.
+* *Zustand veröffentlichen:* Kontinuierliche Veröffentlichung der Odometrie-Informationen auf einem Standard-Topic (z.B. `/odom`).
+|
+* Ein stabil laufender `uc_bridge`-Knoten.
+* Ein `state_estimation_node` (ROS2-Knoten).
+* Ein ROS-Topic (z.B. `/odom`) mit präzisen Fahrzeugzustandsdaten (Pose, Geschwindigkeit).
+* Unit-Tests für den Kern des EKF-Algorithmus.
+|
+Hardware-Abstraktion, Sensorik, Kalman-Filter (EKF) , Zustandsschätzung, Debugging
+
+| *Wahrnehmung /Perception*(2 Personen)
+| Umwandlung von rohen Pixeldaten in strukturierte, bedeutungsvolle Umgebungsinformationen.
+|
+* *Bildverarbeitung:* Kamerabild abonnieren, Kalibrierung, **Inverse Perspective Mapping (IPM)** implementieren.
+* *Fahrspurerkennung:* Algorithmen zur Erkennung und Anpassung von Fahrspuren (z.B. Canny+Hough, RANSAC).
+* *Abweichung berechnen:* Berechnung des lateralen und rotatorischen Fehlers zur Fahrspurmitte.
+* *(Vertiefung)* Implementierung von Verkehrszeichen- oder Parklückenerkennung.
+|
+* Ein `lane_detection_node` (ROS2-Knoten).
+* Ein Satz von Kamerakalibrierungs-Dateien.
+* Ein `/lane_deviation` ROS-Topic, das den Spurfehler veröffentlicht.
+* Unit-Tests für die Kernalgorithmen (z.B. Test mit statischen Bildern).
+* (Optional) Zusätzliche Topics wie `/traffic_sign`.
+|
+Kamerakalibrierung, Inverse Perspective Mapping, Kantendetektion, Farbsegmentierung, Pose-Schätzung, Schnittstellen, 
+(Vertiefung): Verkehrszeichenerkennung, Parklückendetektion
+
+| *Regelung /Control*(2 Personen)
+| Berechnung präziser Fahrzeugaktionen basierend auf Wahrnehmungs- und Zustandsinformationen.
+|
+* *Querregelung:* Implementierung eines **PID-Reglers** für die Spurhaltung.
+* *Fahrzeugmodell:* Anwendung des **Ackermann-Modells**, um die gewünschte Krümmung in einen Lenkwinkel umzurechnen.
+* *Längsregelung:* Implementierung der Geschwindigkeitsregelung.
+* *(Vertiefung)* Entwurf einer Zustandsmaschine (State Machine) für verschiedene Fahrszenarien oder Pfadplanung für das Einparken.
+|
+* Ein `controller_node` (ROS2-Knoten).
+* Fähigkeit, `/lane_deviation` und `/odom` zu abonnieren.
+* Fähigkeit, Steuerbefehle auf `/uc_bridge/set_steering` und `/uc_bridge/set_motor_level_forward` zu veröffentlichen.
+* Unit-Tests für die PID-Logik und die Zustandsmaschine.
+* Eine klare Konfigurationsdatei für Reglerparameter.
+|
+PID-Regler, Ackermann-Modells, Geschwindigkeitssteuerung, Veröffentlichung von Steuerbefehlen.
+(Vertiefung): Zustandsmaschine (State Machine), Pfadplanung
+
+|===
