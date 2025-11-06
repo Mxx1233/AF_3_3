@@ -1,0 +1,61 @@
+= Setup
+:toclevels: 1
+
+Für die Entwicklung wird https://docs.ros.org/en/jazzy/Installation.html[ROS2 Jazzy] auf Ubuntu 24.04 verwendet.
+In diesem Abschnitt wird die Installation der benötigten Pakete auf Ubuntu erklärt, sowie der Setup-Prozess für die Entwicklung unter Windows erklärt.
+
+Die Fahrzeuge sind schon installiert.
+Für die Entwicklung auf dem eigenen Rechner ist es empfohlen, die zur Verfügung gestellte VM oder die im `af/images` zur Verfügung gestellten Docker-Container zu verwenden, um möglichst die gleichen Pakete wie auf dem Fahrzeug zur Verfügung zu haben.
+
+Will man auf dem eigenen Rechner arbeiten, aber nicht auf die VM oder die Docker-Container zurückgreifen, werden folgende Installationen benötigt:
+
+* Ubuntu 24.04 (oder auch die entsprechende Version von Xubuntu oder Kubuntu) Die Ubuntu-Version muss zu der jeweiligen ROS-Version, aktuell Jazzy, passen.
+* ROS2 Jazzy (auf den Fahrzeugen und in der VM ist die "desktop"-Version, in den Docker-Containern die "base"-Version installiert)
+* OpenCV (Standardmäßig ist auf den Fahrzugen (auch) 4.12.0 installiert, was selber gebaut werden muss, da in der Ubuntu-Paketverwaltung nur eine deutlich ältere Version vorhanden ist.)
+* Auf den Fahrzeugen ist dazu noch der Realsense-Treiber und der Realsense-ROS-Wrapper installiert.
+* Zusätzlich sind noch einige notwendige Pakete für Tests und ähnliches installiert.
+* Die in diesem Projektseminar zur Verfügung gestellte `psaf_ucbridge`.
+  (Zur Installation siehe das Repository `af/psaf_ucbridge`.)
+  Auch wenn diese keine Mockup-Funktionalität zur Verfügung stellt, kann es nötig sein, dass die Nachrichten-Typen auch auf dem Entwicklungsrechner installiert sind.
+
+Es sind hier nicht alle Pakete einzeln aufgelistet.
+Bei Interesse kann man sich das Ansible-Playbook im `af/images`-Repo anschauen.
+Dieses kann auch genutzt werden, um die Installation auf dem eigenen System vorzunehmen.
+
+
+== Entwicklung auf Windows-Rechner
+
+Die direkte Entwicklung von ROS Anwendungen unter Windows ist möglich, führt aber oftmals zu Problemen und ungewolltem Verhalten.
+Aus diesem Grund werden zwei Alternativen vorgestellt.
+Die Entwicklung mit einer VM oder und dem Windows Subsystem for Linux.
+
+=== VM
+
+Die Entwicklung in einer Virtual Machine (VM) ermöglicht es, trotz Windows mit Ubuntu zu arbeiten.
+Es sei angemerkt, dass die Performance der VM eingeschränkt sein kann und es vor allem bei der Nutzung einer Kamera zu Bandbreiten und Verbindungsproblemen kommen kann.
+In diesem Tutorial wird die Einrichtung der VM mit https://www.virtualbox.org/[Oracle VirtualBox] erläutert.
+Der https://www.vmware.com/de/products/workstation-player/workstation-player-evaluation.html[VMWare Player] kann ebenfalls verwendet werden, jedoch wird hierfür keine Installationsanleitung bereitgestellt.
+
+
+==== Automatisches Erstellen des VM Images
+
+Im Repository https://git-ce.rwth-aachen.de/af/images[Images] sind Scripte zu finden, um automatisiert ein eingerichtetes VM Image zu erstellen.
+Ausführlichere Informationen zu den verwendeten Paketen und den Installationsscripten kann in der https://git-ce.rwth-aachen.de/af/images/-/blob/main/docs/Entwicklerdokumentation/Entwicklerdokumentation.adoc[Dokumentation] des `af/images`-Repo gefunden werden.
+
+
+==== Manuelle Einrichtung der VM
+
+In der VM muss eine Linux Distribution installiert werden, die mit der verwendeten ROS-Version kompatibel ist.
+Bei ROS2 Jazzy sind dies z.B. https://ubuntu.com/download/desktop[Ubuntu 24.04] oder https://xubuntu.org/news/xubuntu-24-04-released/[Xubuntu 24.04].
+
+
+== WSL
+
+Das https://docs.microsoft.com/en-us/windows/wsl/about[Windows Subsystem für Linux] (WSL) ermöglicht es, ein Linux Subsystem in die Windows Umgebung zu integrieren und mit diesem zu interagieren.
+Der Vorteil von WSL ist, dass der typische Overhead, der bei Verwendung von VMs anfällt, nicht existiert.
+Ubuntu 24.04 wird aus dem https://www.microsoft.com/store/productId/9N6SVWS3RX71[Microsoft Store] installiert.
+Die Interaktion mit Ubuntu erfolgt dann entweder über das Terminal (Ubuntu 24.04 in die Suchleiste eingegeben) oder direkt über die IDE.
+Um die WSL in die IDE zu integrieren, stellen https://www.jetbrains.com/help/clion/how-to-use-wsl-development-environment-in-product.html[CLion] und https://code.visualstudio.com/docs/remote/wsl[VSCode] Tutorials zur Verfügung.
+
+Nach der erfolgreichen Installation von Ubuntu müssen noch die benötigten Pakete installiert werden.
+Dies ist im Abschnitt xref:_einrichtung[Einrichtung] beschrieben.
