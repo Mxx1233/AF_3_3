@@ -1,0 +1,102 @@
+uc_bridge:
+  ros__parameters:
+    serial_port_configuration:
+#       serial_port: "/dev/pts/3"
+      serial_port: "/dev/ttyUSB0"
+    general:
+      raw_communication: false
+      log_level: "info"
+      display_txt: false
+      # remote control publish frequency in ms
+      rc_frequency: 100
+      # steering angle publish frequency in ms
+      steer_frequency: 100
+      # the board version. The old car is 1, the new is 2.
+      board_version: 1
+    sensor_groups:
+      imu:
+        # group_num in [0, 19]
+        group_num: 0
+        activate: true
+        # ts < 10ms has a small bug
+        ts: 15
+      us:
+        group_num: 1
+        activate: true
+      mag:
+        group_num: 2
+        activate: true
+      hall_dt:
+        group_num: 3
+        activate: true
+      hall_dt8:
+        group_num: 4
+        activate: true
+      enc_step:
+        group_num: 5
+        activate: false
+        # skip is important. If the value is too small, there would be a huge delay.
+        skip: 5
+      enc_cm:
+        group_num: 6
+        activate: false
+        # skip is important. If the value is too small, there would be a huge delay.
+        skip: 5
+      vbat:
+        group_num: 7
+        activate: true
+      pb:
+        group_num: 8
+        activate: true
+      unkgrp:
+        activate: false
+      rc:
+        activate: true
+
+    imu_sensor:
+      # acceleration status. Valid value(2, 4, 8, 16)
+      acceleration: 4
+      # rotation rate status. Valid value(250, 500, 1000, 2000)
+      rotation: 500
+      # afilt status. Valid value(-1 ~ 7)
+      afilt: 0
+      # gfilt status. Valid value(-2 ~ 7)
+      gfilt: 0
+
+    mag_sensor:
+      #useasa status. bool value
+      useasa: true
+
+    us_sensor:
+      #us range status.
+      range: 100
+      #us gain status.
+      gain: 10
+
+    topic_name:
+      get_speed: "uc_bridge/get_speed"
+      get_steer: "uc_bridge/get_steering"
+      get_button: "uc_bridge/button"
+      rc: "uc_bridge/manual_signals"
+      led: "uc_bridge/light"
+
+
+      dt: "dt_data"
+      dt8: "dt8_data"
+      hall_cnt: "hall_cnt_data"
+      imu: "imu_data"
+      mag: "mag_data"
+      us_range_sufix: "_range"
+      motor_forward: "uc_bridge/set_motor_level_forward"
+      motor_backward: "uc_bridge/set_motor_level_backward"
+      set_steering_angle: "uc_bridge/set_steering"
+
+      enc_step: "enc_step_data"
+      enc_cm: "enc_cm_data"
+      pb: "pb_data"
+      vbat: "vbat_data"
+      display: "txt_display"
+      unknown_grp: "unknown_grp"
+      set_unknown_grp: "set_unknown_grp"
+    drive:
+      dead_man_switch_interval: 200

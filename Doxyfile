@@ -1,0 +1,27 @@
+# All settings not listed here will use the Doxygen default values.
+
+PROJECT_NAME           = "WS - Template"
+PROJECT_BRIEF          = "Starting Workspace for the development in the PSAF 1 & 2"
+
+RECURSIVE              = YES
+OUTPUT_DIRECTORY       = docs/cpp-docs
+
+INPUT                  = src/
+
+EXCLUDE                = src/psaf_state_machine/include/tinyfsm/
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = .
+
+EXTRACT_ALL            = YES
+SORT_MEMBER_DOCS       = NO
+
+GENERATE_LATEX         = NO
+
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+
+JAVADOC_AUTOBRIEF      = YES
+
+

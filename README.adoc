@@ -1,0 +1,62 @@
+= PS AF - Start Workspace
+
+|===
+| Branch | Pipeline Status | Code Coverage Report| Code Coverage Overview | Dokumentation | Doxygen
+
+|*Main*
+|image:https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/badges/main/pipeline.svg[pipeline status main]
+|image:https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/badges/main/coverage.svg[coverage report main]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/main/file/lcov/index.html?job=coverage[Coverage overview]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/main/raw/docs/Entwicklerdokumentation.pdf?job=documentation_asciidoc[Entwicklerdokumentation]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/main/file/docs/cpp-docs/index.html?job=documentation_doxygen[cpp-docs]
+
+
+|*Develop*
+|image:https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/badges/develop/pipeline.svg[pipeline status develop]
+|image:https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/badges/develop/coverage.svg[coverage report develop]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/develop/file/lcov/index.html?job=coverage[Coverage overview]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/develop/raw/docs/Entwicklerdokumentation.pdf?job=documentation_asciidoc[Entwicklerdokumentation]
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/develop/file/docs/cpp-docs/index.html?job=documentation_doxygen[cpp-docs]
+|===
+
+Dieser Workspace dient als Startpunkt für die Entwicklung von eigenen Lösungen im Projektseminar Autonomes Fahren.
+Zum Starten muss dieses Git Repo geklont werden und die Informationen in den ``package.xml`` Dateien der einzelnen Pakete angepasst werden.
+
+Eine *Erste-Schritte-Anleitung* ist in xref:First_Steps.adoc[First_Steps] zu finden.
+Diese erläutert die Inbetriebnahme des Fahrzeuges und zeigt, wie man die Sensorik und Aktorik des Fahrzeuges überprüfen kann.
+Auch führt dieser den Node `psaf_firststeps` ein, der ein Beispiel darstellt, wie man einen C++-ROS-Node schreiben und mit dem Fahrzeug über die entsprechenden Topics kommunizieren kann.
+
+
+== Downloads
+
+Die Archive der letzten Builds des Main und Develop Branches können hier heruntergeladen werden. Sollte der letzte Build mehr als 4 Wochen her sein, so muss die Pipeline erneut gestartet werden, da die Artifakte nur solange gespeichert werden.
+
+|===
+| Branch | CPP-Docs | Coverage
+| *Main*
+| https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/main/download?job=documentation_doxygen[CPP Docs TAR]
+| https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/main/download?job=coverage[Coverage TAR]
+
+
+| *Develop*
+|https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/develop/download?job=documentation_doxygen[CPP Docs TAR]
+| https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c/-/jobs/artifacts/develop/download?job=coverage[Coverage TAR]
+|===
+
+== TODOs
+
+Passt in der `README.adoc` die Links in der Tabelle oben an euren Branch an.
+Ersetzt `https://git-ce.rwth-aachen.de/psaf-1-repos/wise-2025-26-gruppe-c` durch den Link zu eurem Repository.
+
+Anschließend muss überprüft werden, ob die Pipeline korrekt durchläuft. Insbesondere muss geprüft werden, ob alle Skripte (.sh) und Python-Dateien (.py) korrekt ausgeführt werden. Hierfür muss jede Stage der Pipeline geöffnet werden und geschaut werden, ob es zu einem `Permission denied` Fehler kommt. Falls dies der Fall ist, müssen die Schritte im FAQ Teil der Dokumentation ausgeführt werden.
+
+== Weitere Informationen
+
+Generelle Informationen und eine Dokumentation für das PSAF 1 findet ihr unter https://git-ce.rwth-aachen.de/af/psaf-1/psaf-1_documentation/-/jobs/artifacts/main/raw/Dokumentation/PS_AF_1.pdf?job=Pdf[PS_AF_1.pdf] im https://git-ce.rwth-aachen.de/af/psaf-1/psaf-1_documentation[PS AF 1 - Dokumentation] Repo.
+Weitere Material findet ihr im Repo https://git-ce.rwth-aachen.de/af/infos[Allgemeine Informationen].
+
+== CI-Pipeline
+
+Das Repsitory verfügt über eine CI-Piepline, die die Builds automatisch erstellt.
+Anschließend wird der Code getestet und die Dokumentation erstellt.
+Falls ein Tag spezifiziert wurde, wird außerdem ein Release erstellt.

@@ -1,0 +1,178 @@
+default:
+  image: registry.git-ce.rwth-aachen.de/af/images/jazzy_opencv4.12.0:develop
+  # retry at least two times
+  # retry: 2
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+
+# variables:
+  # DOCKER_DRIVER: overlay2
+
+#############################
+# Various snippets
+#############################
+# Defines the rule that the extending job only runs if tag is a version tag.
+.tag_only: &tag_only
+  rules:
+    # Run this job when a tag in the format 'v1.2.3' is created
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
+# Defines version variable for tags.
+.version: &version
+  - export VERSION=${CI_COMMIT_TAG##v} # This removes 'v' from CI_COMMIT_TAG.
+
+
+# skip complete pipeline if branch is experimental
+# https://gitlab.com/gitlab-org/gitlab-foss/issues/26991
+# therefore we add an "extends: .skip_experimental" to all jobs
+.skip_experimental:
+  except:
+    variables:
+      - $CI_COMMIT_REF_NAME =~ "experimental"
+
+# Defines url and path variables for release related jobs.
+.release_vars: &release_vars
+  # urls:
+  - export DOCS_REGISTRY_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/docs/${VERSION}/"
+  # paths:
+  - export DOC_PREFIX="docs"
+  - export DEV_DOC_NAME="Entwicklerdokumentation.pdf"
+  - export DEV_DOC_PATH="$DOC_PREFIX/$DEV_DOC_NAME"
+  - export CPP_DOC_PATH="$DOC_PREFIX/cpp-docs/"
+  - export CPP_DOC_TAR="cppdoc.tar.gz"
+
+stages:
+  - build
+  - test
+  - analysis
+  - documentation
+  - debian
+  - release
+
+###################################
+# carolo cup ws
+###################################
+build:
+  stage: build
+  extends: .skip_experimental
+  script:
+    - sh ./ci_install.sh
+    - colcon build --symlink-install
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - build/
+      - install/
+
+
+test:
+  stage: test
+  extends: .skip_experimental
+  script:
+    - sh ./ci_install.sh
+    - colcon test --abort-on-error --executor sequential --packages-ignore psaf_configuration psaf_launch psaf_firststeps
+    - 'colcon test-result --all |grep xml |cut -d":" -f1 | xargs .gitlab-ci/merge-test-results.py test-results.xml || true'
+    - colcon test-result --verbose
+  artifacts:
+    name: "$CI_JOB_NAME"
+    when: on_failure
+    paths:
+      - log/latest_test
+      - log/latest_test-result
+
+
+code:
+  stage: analysis
+  extends: .skip_experimental
+  script:
+    - cppcheck --suppressions-list=cppcheck_suppressions.txt ./src
+  artifacts:
+    name: "$CI_JOB_NAME"
+    when: on_failure
+    paths:
+      - log/cppcheck_report.txt
+
+
+coverage:
+  stage: analysis
+  extends: .skip_experimental
+  script:
+    - sh ./ci_install.sh
+    - colcon build --packages-ignore psaf_launch psaf_configuration --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage " -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1"
+    - colcon lcov-result --packages-ignore psaf_configuration psaf_launch --zero-counters
+    - colcon lcov-result --initial --packages-ignore psaf_configuration psaf_launch --lcov-args --ignore-errors mismatch
+    - colcon test --packages-ignore psaf_configuration psaf_launch --executor sequential
+    - colcon lcov-result --packages-ignore psaf_configuration psaf_launch --verbose --lcov-args --ignore-errors mismatch
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - lcov
+  variables:
+    COVERAGE_FLAGS: "-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1"
+  coverage: /\s*lines.*:\s(\d+\.\d+\%\s\(\d+\sof\s\d+.*\))/
+
+
+documentation_doxygen:
+  stage: documentation
+  extends: .skip_experimental
+  script:
+    - doxygen Doxyfile
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - docs/cpp-docs
+
+
+documentation_asciidoc:
+  stage: documentation
+  image: asciidoctor/docker-asciidoctor:latest
+  extends: .skip_experimental
+  script:
+    - asciidoctor --base-dir=docs/Entwicklerdokumentation --destination-dir=.. docs/Entwicklerdokumentation/Entwicklerdokumentation.adoc
+    - asciidoctor-pdf --base-dir=docs/Entwicklerdokumentation --destination-dir=.. docs/Entwicklerdokumentation/Entwicklerdokumentation.adoc
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - docs
+
+
+# Upload the documentation (README) to gitlabs release.
+upload:
+  stage: release
+  image: curlimages/curl:latest
+  <<: *tag_only
+  script:
+    - *version
+    - *release_vars
+    # Create archive of cpp docs:
+    - echo "Create archive of cpp export"
+    - cd $CPP_DOC_PATH && tar -czvf ../../$CPP_DOC_TAR * && cd ../..
+    # Upload files to registry:
+    - echo "Upload ${DEV_DOC_PATH} to ${DOCS_REGISTRY_URL}"
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${DEV_DOC_PATH} ${DOCS_REGISTRY_URL}
+    - echo "Upload ${CPP_DOC_TAR} to ${DOCS_REGISTRY_URL}"
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${CPP_DOC_TAR} ${DOCS_REGISTRY_URL}
+  dependencies:
+    - documentation_doxygen
+    - documentation_asciidoc
+
+
+# This will create a release within gitlab.
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  <<: *tag_only
+  script:
+    - *version
+    - *release_vars
+    # Use release-cli to create a release and link all information
+    - echo 'Creating release'
+    - |
+      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
+        --assets-link \
+        "{\"name\":\"${DEV_DOC_NAME}\",\"url\":\"${DOCS_REGISTRY_URL}${DEV_DOC_NAME}\"}" \
+        --assets-link \
+        "{\"name\":\"${CPP_DOC_TAR}\",\"url\":\"${DOCS_REGISTRY_URL}${CPP_DOC_TAR}\"}" \
