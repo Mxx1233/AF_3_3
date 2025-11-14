@@ -1,0 +1,198 @@
+= Rusty Racer - Systemarchitektur und Schnittstellendefinition
+:author: Shengtao Wen
+:revnumber: 1.0.0
+:revdate: 14-11-2025
+:revremark: Erste Version des Architektur-Dokuments.
+:toc: left
+:toclevels: 3
+:sectnums:
+:source-highlighter: rouge
+:imagesdir: images
+
+// Dieses Dokument ist die zentrale "Source of Truth" für die Softwarearchitektur
+// und die Kommunikationsprotokolle des Rusty Racer Projekts.
+
+== Einleitung
+
+Dieses Dokument beschreibt die Gesamtarchitektur der Software für das Projektseminar "Autonomes Fahren". Es definiert die einzelnen Softwaremodule (ROS 2 Knoten), ihre Verantwortlichkeiten, sowie die Schnittstellen (ROS 2 Topics), über die sie miteinander kommunizieren.
+
+== Systemübersicht und Datenfluss
+
+Die Architektur folgt einem modularen, datenfluss-orientierten Ansatz. Jedes Modul ist als eigenständiger ROS 2-Knoten implementiert und kommuniziert über klar definierte Topics mit anderen Modulen.
+
+Die folgende Grafik illustriert den Hauptdatenfluss im System:
+
+.Datenflussdiagramm des Gesamtsystems
+[mermaid, system-data-flow, svg]
+----
+graph TD
+    subgraph "Hardware Drivers"
+        UC_BRIDGE[uc_bridge_node]
+        REALSENSE[realsense_ros_node]
+    end
+    subgraph "State Estimation & Adapters"
+        STATE_EST[state_estimation_node]
+        ADAPTER[uc_bridge_adapter_node]
+    end
+    subgraph "Perception"
+        LANE_DET[lane_detection_node]
+    end
+    subgraph "Control"
+        CONTROLLER[controller_node]
+    end
+
+    Hardware -->|Sensors| UC_BRIDGE
+    Hardware -->|Camera| REALSENSE
+
+    UC_BRIDGE -->|/imu_data & /dt_data| STATE_EST
+    REALSENSE -->|/camera/color/image_raw | LANE_DET
+    
+    STATE_EST -->|/odom| CONTROLLER
+    LANE_DET -->|/lane_deviation| CONTROLLER
+    
+    CONTROLLER -->|/motor_command| ADAPTER
+    ADAPTER -->|/uc_bridge/set_steering & ...forward| UC_BRIDGE
+    UC_BRIDGE -->|Actuators| Hardware
+----
+
+
+== Knotendefinitionen (Nodes)
+
+Dieser Abschnitt beschreibt jeden einzelnen Knoten im Detail.
+
+=== `uc_bridge_node`
+* *Paket:* `psaf_ucbridge` (Extern)
+* *Kernverantwortlichkeit:* Stellt die Brücke zwischen dem ROS 2-System und dem Mikrocontroller über die serielle Schnittstelle her.
+
+=== `realsense-ros` node
+* *Paket:* `realsense2_camera` (Extern)
+* *Kernverantwortlichkeit:* Stellt den Treiber für die Intel RealSense D455i Kamera bereit und veröffentlicht Bild- und IMU-Daten.
+
+=== `uc_bridge_adapter_node`
+* *Paket:* `low_level_pkg`
+* *Kernverantwortlichkeit:* Übersetzt die abstrakten, physikalischen Steuerbefehle vom `/motor_command` Topic in die hardware-spezifischen `Int16`-Werte, die der `uc_bridge_node` erwartet.
+
+=== `state_estimation_node`
+* *Paket:* `low_level_pkg`
+* *Kernverantwortlichkeit:* Fusioniert die Rohdaten von IMU und Radsensoren (über `uc_bridge`), um eine genaue Schätzung der Fahrzeug-Odometrie (Position, Orientierung, Geschwindigkeit) zu liefern.
+
+=== `lane_detection_node`
+* *Paket:* `perception_pkg`
+* *Kernverantwortlichkeit:* Verarbeitet die Kamerabilder, erkennt die Fahrspuren und berechnet die Abweichung des Fahrzeugs von der Fahrspurmitte.
+
+=== `controller_node`
+* *Paket:* `control_pkg`
+* *Kernverantwortlichkeit:* Das "Gehirn" des Fahrzeugs. Berechnet auf Basis der Fahrspurabweichung und der aktuellen Fahrzeug-Odometrie die notwendigen Lenk- und Motorbefehle.
+
+
+== Schnittstellendefinitionen (Interfaces & Topics)
+
+Dieser Abschnitt listet alle wichtigen Topics und die dazugehörigen Nachrichtentypen auf.
+
+.Übersicht der Kommunikations-Topics
+[cols="3,4,3,3", options="header"]
+|===
+| Topic Name | Message Type | Publisher Node | Subscriber Node(s)
+
+| `/camera/color/image_raw`
+| `sensor_msgs/msg/Image`
+| `realsense-ros`
+| `lane_detection_node`
+
+| `/camera/color/camera_info`
+| `sensor_msgs/msg/CameraInfo`
+| `realsense-ros`
+| `lane_detection_node`
+
+| `/imu_data`
+| `sensor_msgs/msg/Imu`
+| `uc_bridge_node`
+| `state_estimation_node`
+
+| `/dt_data`
+| `std_msgs/msg/Float32`
+| `uc_bridge_node`
+| `state_estimation_node`
+
+| `/odom`
+| `nav_msgs/msg/Odometry`
+| `state_estimation_node`
+| `controller_node`
+
+| `/lane_deviation`
+| `rusty_racer_interfaces/msg/LaneDeviation`
+| `lane_detection_node`
+| `controller_node`
+
+| `/motor_command`
+| `rusty_racer_interfaces/msg/MotorCommand`
+| `controller_node`
+| `uc_bridge_adapter_node`
+
+| `/uc_bridge/set_steering`
+| `std_msgs/msg/Int16`
+| `uc_bridge_adapter_node`
+| `uc_bridge_node`
+
+| `/uc_bridge/set_motor_level_forward`
+| `std_msgs/msg/Int16`
+| `uc_bridge_adapter_node`
+| `uc_bridge_node`
+
+|===
+
+
+== Definition der benutzerdefinierten Nachrichten (Custom Messages)
+
+Dieser Abschnitt beschreibt die Struktur der im `rusty_racer_interfaces` Paket definierten Nachrichten.
+
+=== `MotorCommand.msg`
+[source, subs="quotes"]
+----
+# Zweck: Definiert den übergeordneten Steuerbefehl, der vom Kontrollknoten an den
+#        Adapterknoten der unteren Ebene gesendet wird.
+# Die Einheiten sind physikalische Einheiten, entkoppelt von der Hardware.
+
+# Gewünschter Lenkwinkel des Servos in Radiant (radians).
+# Konvention: Positive Werte bedeuten eine Rechtskurve, negative eine Linkskurve.
+float32 steering_angle
+
+# Gewünschtes Antriebsniveau des Motors als normalisierter Wert im Bereich [-1.0, 1.0].
+# Konvention:
+#   (0.0, 1.0] -> Vorwärtsbewegung
+#   0.0        -> Null Leistung / Rollen
+#   [-1.0, 0.0) -> Aktives Bremsen oder Rückwärtsfahrt.
+# Für die erste Phase verwenden wir nur den Bereich [0.0, 1.0].
+float32 motor_level
+
+----
+
+
+=== `LaneDeviation.msg`
+[source, subs="quotes"]
+----
+# Zweck: Beschreibt die Abweichung des Fahrzeugs von der Mitte der erkannten Fahrspur.
+#        Wird vom Wahrnehmungsknoten veröffentlicht.
+
+# Standard-Nachrichtenkopf, der einen genauen Zeitstempel und eine Koordinatensystem-ID enthalten muss.
+# stamp: Zeitstempel des Eingabebildes.
+# frame_id: "base_link"
+std_msgs/Header header
+
+# Laterale Abweichung in Metern (meters).
+# Beschreibt die seitliche Verschiebung des Fahrzeug-Referenzpunktes (Ursprung von base_link)
+# von der Mitte der Fahrspur.
+# Konvention: Ein positiver Wert bedeutet, dass sich das Fahrzeug rechts von der Mitte befindet.
+float32 lateral_error
+
+# Gierwinkel-Abweichung in Radiant (radians).
+# Beschreibt den Winkel zwischen der Fahrzeugausrichtung (X-Achse von base_link) und der
+# Tangentenrichtung der Fahrspur.
+# Konvention: Ein positiver Wert bedeutet, die Fahrzeugfront zeigt nach rechts von der Fahrspurrichtung.
+float32 heading_error
+
+# (Optionale Implementierung) Geschätzte Krümmung der Fahrspur in 1/Meter.
+# Eine Gerade hat die Krümmung 0.
+float32 curvature
+
+----
