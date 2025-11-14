@@ -15,7 +15,7 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorCommand.msg"
-  "msg/LaneDeviation.msg"  
+  "msg/LaneDeviation.msg"
   DEPENDENCIES std_msgs
 )
 
