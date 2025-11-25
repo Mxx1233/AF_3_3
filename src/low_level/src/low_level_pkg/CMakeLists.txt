@@ -8,6 +8,10 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -20,5 +24,29 @@ if(BUILD_TESTING)
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+# ----------------------------------------
+#Adding the f0_state_estimation_node
+# ----------------------------------------
+
+add_executable(f0_state_estimation_node src/f0_state_estimation_node.cpp)
+ament_target_dependencies(f0_state_estimation_node rclcpp std_msgs nav_msgs sensor_msgs)
+
+install(TARGETS
+  f0_state_estimation_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+# ----------------------------------------
+#Adding the a1_state_estimation_node
+# ----------------------------------------
+
+add_executable(a1_state_estimation_node src/a1_state_estimation_node.cpp)
+ament_target_dependencies(a1_state_estimation_node  rclcpp std_msgs sensor_msgs nav_msgs)
+
+install(TARGETS
+  a1_state_estimation_node
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
