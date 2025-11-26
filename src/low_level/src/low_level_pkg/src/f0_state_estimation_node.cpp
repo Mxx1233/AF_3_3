@@ -13,12 +13,12 @@
 // Radparameter
 
 // #define WHEEL_RADIUS_M     0.10     // Radradius in Metern (z.B. 0.10 = 10 cm)
-#define WHEEL_CIR_FERENCE  0.10     // Radumfang in Metern (z.B. 0.10 = 10 cm)
+#define WHEEL_CIR_FERENCE  0.22     // Radumfang in Metern (z.B. 0.10 = 10 cm)
 #define DIRECTION_SIGN     1        // +1: Vorwärts, -1: falls Drehrichtung invertiert
 
 // Topics
 #define ODOM_TOPIC         "/odom"
-#define IMU_TOPIC          "/imu/data"
+#define IMU_TOPIC          "/imu_data"
 #define DT8_TOPIC          "/dt8_data"
 
 // Frames

@@ -43,11 +43,11 @@ install(TARGETS
 #Adding the a1_state_estimation_node
 # ----------------------------------------
 
-add_executable(a1_state_estimation_node src/a1_state_estimation_node.cpp)
-ament_target_dependencies(a1_state_estimation_node  rclcpp std_msgs sensor_msgs nav_msgs rusty_racer_interfaces)
+add_executable(state_estimation_node src/state_estimation_node.cpp)
+ament_target_dependencies(state_estimation_node  rclcpp std_msgs sensor_msgs nav_msgs rusty_racer_interfaces)
 
 install(TARGETS
-  a1_state_estimation_node
+  state_estimation_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
