@@ -30,13 +30,13 @@ endif()
 #Adding the f0_state_estimation_node
 # ----------------------------------------
 
-add_executable(f0_state_estimation_node src/f0_state_estimation_node.cpp)
-ament_target_dependencies(f0_state_estimation_node rclcpp std_msgs nav_msgs sensor_msgs rusty_racer_interfaces)
+#add_executable(f0_state_estimation_node src/f0_state_estimation_node.cpp)
+#ament_target_dependencies(f0_state_estimation_node rclcpp std_msgs nav_msgs sensor_msgs rusty_racer_interfaces)
 
-install(TARGETS
-  f0_state_estimation_node
-  DESTINATION lib/${PROJECT_NAME}
-)
+#install(TARGETS
+#  f0_state_estimation_node
+#  DESTINATION lib/${PROJECT_NAME}
+#)
 
 
 # ----------------------------------------
