@@ -82,7 +82,7 @@ private:
     set_steering_pub_->publish(steering_msg);
 
     // Motorlevel umrechnen (mit Bremsen, ohne Rückwärts)
-    /* 
+    /*
     int16_t motor_level_forward_value, motor_level_backward_value = 0;
     if (msg->motor_level <= -1.0f) {
       motor_level_forward_value = SET_MOTOR_LEVEL_FORWARD_MIN;
@@ -109,7 +109,7 @@ private:
       // Rückwärts fahren
       float motor_level_backward_float = -msg->motor_level; // positiv machen
       if (motor_level_backward_float >= 1.0f) {
-        motor_level_backward_value = - SET_MOTOR_LEVEL_FORWARD_MIN;
+        motor_level_backward_value = -SET_MOTOR_LEVEL_FORWARD_MIN;
       } else {
         motor_level_backward_value = static_cast<int16_t>(
           motor_level_backward_float * (-SET_MOTOR_LEVEL_FORWARD_MIN));
@@ -119,7 +119,7 @@ private:
       // Motor aus
       motor_level_forward_value = 0;
       motor_level_backward_value = 0;
-    } 
+    }
 
     std_msgs::msg::Int16 motor_level_forward_msg;
     std_msgs::msg::Int16 motor_level_backward_msg;
@@ -134,8 +134,8 @@ private:
       RCLCPP_INFO(get_logger(), "Motor Level Backward: %d", motor_level_backward_value);
       set_motor_level_backward_pub_->publish(motor_level_backward_msg);
     }
-    
-    
+
+
   }
 
     // --- ROS I/O ---

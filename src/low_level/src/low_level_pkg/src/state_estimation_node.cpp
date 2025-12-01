@@ -64,7 +64,7 @@ private:
   {
     const float period = msg->data;
     if (period > 0.0f && std::isfinite(period)) {
-      v_lin = (1/8)*DIRECTION_SIGN * (WHEEL_CIR_FERENCE / static_cast<double>(period));
+      v_lin = (1 / 8) * DIRECTION_SIGN * (WHEEL_CIR_FERENCE / static_cast<double>(period));
       have_dt8 = true;
     } else {
       v_lin = 0.0;
