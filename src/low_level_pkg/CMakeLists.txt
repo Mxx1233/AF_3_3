@@ -13,16 +13,35 @@ find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(rusty_racer_interfaces REQUIRED)
 
+add_library(state_estimation_core INTERFACE)
+target_include_directories(state_estimation_core INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+add_library(uc_mapper INTERFACE)
+target_include_directories(uc_mapper INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(test_state_estimation test/test_state_estimation.cpp)
+  target_link_libraries(test_state_estimation state_estimation_core)
+
+  ament_add_gtest(test_uc_mapper test/test_uc_mapper.cpp)
+  target_link_libraries(test_uc_mapper uc_mapper)
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
   # the following line skips cpplint (only works in a git repo)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files
-  set(ament_cmake_cpplint_FOUND TRUE)
+  #set(ament_cmake_cpplint_FOUND TRUE)
+
   ament_lint_auto_find_test_dependencies()
 endif()
 
@@ -45,6 +64,7 @@ endif()
 
 add_executable(state_estimation_node src/state_estimation_node.cpp)
 ament_target_dependencies(state_estimation_node  rclcpp std_msgs sensor_msgs nav_msgs rusty_racer_interfaces)
+target_link_libraries(state_estimation_node state_estimation_core)
 
 install(TARGETS
   state_estimation_node
@@ -58,6 +78,7 @@ ament_package()
 
 add_executable(uc_bridge_adapter_node src/uc_bridge_adapter_node.cpp)
 ament_target_dependencies(uc_bridge_adapter_node rclcpp std_msgs rusty_racer_interfaces)
+target_link_libraries(uc_bridge_adapter_node uc_mapper)
 
 install(TARGETS
   uc_bridge_adapter_node
