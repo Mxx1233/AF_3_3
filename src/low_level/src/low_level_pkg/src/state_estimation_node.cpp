@@ -59,7 +59,7 @@ public:
 private:
   // ======== Callbacks ========
 
-  // Callback: dt8 (Sekunden pro Radumdrehung)
+  // Callback: dt8 (Sekunden pro 1/8 Radumdrehung)
   void dtCallback(const std_msgs::msg::Float32::SharedPtr msg)
   {
     last_dt_time = now();
@@ -118,7 +118,7 @@ private:
     odom.twist.twist.angular.z = w;
 
 
-    // Position (2D) aus Integration v_lin und Yaw (Genauigkeit ist begrenzt)!
+    // Position (2D) aus Integration v_lin und Yaw (Genauigkeit ist begrenzt)! Für Rückwärtsfahrt noch nicht getestet
     odom.pose.pose.position.x += v_lin * std::cos(yaw) * dt;
     odom.pose.pose.position.y += v_lin * std::sin(yaw) * dt;
     odom.pose.pose.position.z = 0.0;  // flach auf Boden
