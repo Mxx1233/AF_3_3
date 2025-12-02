@@ -62,9 +62,10 @@ private:
   // Callback: dt8 (Sekunden pro Radumdrehung)
   void dtCallback(const std_msgs::msg::Float32::SharedPtr msg)
   {
+    last_dt_time = now();
     const float period = msg->data;
     if (period > 0.0f && std::isfinite(period)) {
-      v_lin = (1 / 8) * DIRECTION_SIGN * (WHEEL_CIR_FERENCE / static_cast<double>(period));
+      v_lin = (1.0 / 8.0) * DIRECTION_SIGN * (WHEEL_CIR_FERENCE / static_cast<double>(period));
       have_dt8 = true;
     } else {
       v_lin = 0.0;
@@ -106,9 +107,21 @@ private:
     // Orientierung (nur Yaw)
     odom.pose.pose.orientation = q;
 
+    // Timeout für v_lin (falls dt8 ausbleibt)
+    double time_since_dt8 = (t_now - last_dt_time).seconds();
+    if (time_since_dt8 > 0.5) {
+      v_lin = 0.0; // setze Geschwindigkeit auf 0
+    }
+
     // Geschwindigkeit
     odom.twist.twist.linear.x = v_lin;
     odom.twist.twist.angular.z = w;
+
+
+    // Position (2D) aus Integration v_lin und Yaw (Genauigkeit ist begrenzt)!
+    odom.pose.pose.position.x += v_lin * std::cos(yaw) * dt;
+    odom.pose.pose.position.y += v_lin * std::sin(yaw) * dt;
+    odom.pose.pose.position.z = 0.0;  // flach auf Boden
 
     // ---- Publizieren ----
     odom_pub->publish(odom);
@@ -141,6 +154,7 @@ private:
 
   // ======== Zustände ========
   rclcpp::Time last_time;
+  rclcpp::Time last_dt_time;
   sensor_msgs::msg::Imu last_imu;
   double v_lin;
   double yaw;

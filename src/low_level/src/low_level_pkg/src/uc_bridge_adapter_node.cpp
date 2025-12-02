@@ -14,7 +14,7 @@
 // Lenkungparameter
 #define SET_STEERING_LEFT_MAX  -250
 #define SET_STEERING_CENTER     0
-#define SET_EERING_RIGHT_MAX  250
+#define SET_STEERING_RIGHT_MAX  250
 #define ANGLE_STEERING_LEFT_MAX_GRAD  -25 //negative for left Rad = (M_PI / 180.0 * ANGLE_STEERING_LEFT_MAX_GRAD) Rad(25 Grad) = 0.44
 #define ANGLE_STEERING_RIGHT_MAX_GRAD  25 //positive for right
 #define ANGLE_STEERING_LEFT_MAX_RAD  (M_PI / 180.0 * ANGLE_STEERING_LEFT_MAX_GRAD)
@@ -68,13 +68,13 @@ private:
     if (msg->steering_angle <= ANGLE_STEERING_LEFT_MAX_RAD) {
       steering_value = SET_STEERING_LEFT_MAX;
     } else if (msg->steering_angle >= ANGLE_STEERING_RIGHT_MAX_RAD) {
-      steering_value = SET_EERING_RIGHT_MAX;
+      steering_value = SET_STEERING_RIGHT_MAX;
     } else {
       // Linear interpolieren
       steering_value = static_cast<int16_t>(
         SET_STEERING_CENTER +
         (msg->steering_angle - ANGLE_STEERING_CENTER_RAD) *
-        (SET_EERING_RIGHT_MAX - SET_STEERING_CENTER) /
+        (SET_STEERING_RIGHT_MAX - SET_STEERING_CENTER) /
         (ANGLE_STEERING_RIGHT_MAX_RAD - ANGLE_STEERING_CENTER_RAD));
     }
     std_msgs::msg::Int16 steering_msg;
@@ -123,16 +123,20 @@ private:
 
     std_msgs::msg::Int16 motor_level_forward_msg;
     std_msgs::msg::Int16 motor_level_backward_msg;
+
     motor_level_forward_msg.data = motor_level_forward_value;
     motor_level_backward_msg.data = motor_level_backward_value;
     if (motor_level_forward_value > 0) {
       RCLCPP_INFO(get_logger(), "Motor Level Forward: %d", motor_level_forward_value);
       set_motor_level_forward_pub_->publish(motor_level_forward_msg);
-    }
-
-    if (motor_level_backward_value > 0) {
+    } else if (motor_level_backward_value > 0) {
       RCLCPP_INFO(get_logger(), "Motor Level Backward: %d", motor_level_backward_value);
       set_motor_level_backward_pub_->publish(motor_level_backward_msg);
+    } else {
+      set_motor_level_forward_pub_->publish(motor_level_forward_msg);
+      set_motor_level_backward_pub_->publish(motor_level_backward_msg);
+      RCLCPP_INFO(get_logger(), "Motor Stopped with Forward: %d Backward: %d",
+        motor_level_forward_value, motor_level_backward_value);
     }
 
 
