@@ -98,7 +98,8 @@ variables:
   # Packages that should be ignored from build, test, and coverage
   PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststeps"
   # CMake arguments for enabling Gcov/Lcov profiling
-  COV_CMAKE_ARGS: "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage' -DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1'"
+  CXX_FLAGS_ARG: -DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'
+  C_FLAGS_ARG: -DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1'
 
 coverage:
   stage: analysis
@@ -107,7 +108,9 @@ coverage:
     - echo "--- 1. Building all packages with Coverage Flags ---"
     - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE --cmake-clean-cache || exit 1
     # Build with profiling flags
-    - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE --cmake-args $COV_CMAKE_ARGS || exit 1
+    - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE \ 
+      --cmake-args $CXX_FLAGS_ARG $C_FLAGS_ARG \ 
+      || exit 1
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
