@@ -108,9 +108,7 @@ coverage:
     - echo "--- 1. Building all packages with Coverage Flags ---"
     - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE --cmake-clean-cache || exit 1
     # Build with profiling flags
-    - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE \
-      --cmake-args "$CXX_FLAGS_ARG" "$C_FLAGS_ARG" \
-      || exit 1
+    - colcon build --symlink-install --packages-ignore $PACKAGES_TO_IGNORE --cmake-args "$CXX_FLAGS_ARG" "$C_FLAGS_ARG" || exit 1
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
