@@ -31,9 +31,19 @@ if(BUILD_TESTING)
 
   ament_add_gtest(test_state_estimation test/test_state_estimation.cpp)
   target_link_libraries(test_state_estimation state_estimation_core)
+  if(COVERAGE_RUN)
+    target_compile_options(test_state_estimation PRIVATE -fprofile-arcs -ftest-coverage)
+    target_link_options(test_state_estimation PRIVATE -fprofile-arcs -ftest-coverage)
+  endif()
 
   ament_add_gtest(test_uc_mapper test/test_uc_mapper.cpp)
   target_link_libraries(test_uc_mapper uc_mapper)
+
+  if(COVERAGE_RUN)
+    target_compile_options(test_uc_mapper PRIVATE -fprofile-arcs -ftest-coverage)
+    target_link_options(test_uc_mapper PRIVATE -fprofile-arcs -ftest-coverage)
+  endif()
+
   # the following line skips the linter which checks for copyrights
   # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
