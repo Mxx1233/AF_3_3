@@ -119,6 +119,12 @@ coverage:
     # --- 3. Run Tests (Generates raw .gcda data) ---
     - echo "--- 3. Running Tests (on all packages) ---"
     - colcon test --packages-ignore $PACKAGES_TO_IGNORE --executor sequential || exit 1
+    
+    - echo "--- DEBUG: Checking GCOV Data Files ---"
+
+    - find $CI_PROJECT_DIR/build -name "*.gcda" -ls
+
+    - chmod -R 777 $CI_PROJECT_DIR/build/
 
     # --- 4. Generate Raw LCOV Report (Aggregates all packages) ---
     - echo "--- 4. Generating Raw LCOV Report ---"
