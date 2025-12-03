@@ -94,24 +94,63 @@ code:
       - log/cppcheck_report.txt
 
 
+variables:
+  # Packages that should be ignored from build, test, and coverage
+  PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststeps"
+  PACKAGES_TO_COVERAGE_IGNORE: "rusty_racer_interfaces"
+  # CMake arguments for enabling Gcov/Lcov profiling
+
 coverage:
   stage: analysis
-  extends: .skip_experimental
   script:
-    - sh ./ci_install.sh
-    - colcon build --packages-ignore psaf_launch psaf_configuration --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage " -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1"
-    - colcon lcov-result --packages-ignore psaf_configuration psaf_launch --zero-counters
-    - colcon lcov-result --initial --packages-ignore psaf_configuration psaf_launch --lcov-args --ignore-errors mismatch
-    - colcon test --packages-ignore psaf_configuration psaf_launch --executor sequential
-    - colcon lcov-result --packages-ignore psaf_configuration psaf_launch --verbose --lcov-args --ignore-errors mismatch
+    # --- 1. Build ---
+    - echo "--- 1. Building all packages with Coverage Flags ---"
+    - colcon build --symlink-install --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1" || exit 1
+
+    # --- 2. Initialize LCOV Counters ---
+    - echo "--- 2. Initializing LCOV Counters ---"
+    - lcov --zerocounters --directory . || exit 1
+
+    # --- 3. Run Tests ---
+    - echo "--- 3. Running Tests (on all packages) ---"
+    - colcon test --packages-ignore $PACKAGES_TO_IGNORE --executor sequential || exit 1
+    - echo "Checking if .gcda files exist..."
+    - find build -name "*.gcda"
+
+    # --- 4. Generate Raw LCOV Report ---
+    - echo "--- 4. Generating Raw LCOV Report ---"
+    - mkdir -p lcov
+    - lcov --capture --directory . --output-file lcov/total_coverage.info --ignore-errors mismatch || exit 1
+
+    # --- 5. Clean and Finalize Report ---
+    - echo "--- 5. Cleaning and Finalizing Report (Removing Noise) ---"
+    - RAW_INFO_FILE="$CI_PROJECT_DIR/lcov/total_coverage.info"
+    - FINAL_INFO_FILE="$CI_PROJECT_DIR/lcov/project_final.info"
+    - |
+      echo "Running lcov --remove..."
+      lcov --remove "$RAW_INFO_FILE" \
+        "/opt/ros/*" \
+        "/usr/*" \
+        "*/build/low_level_pkg/gtest/*" \
+        "*/test/*" \
+        "*/build/rusty_racer_interfaces/*" \
+        "*/msg/detail/*" \
+        "*/src/*_node.cpp" \
+        -o $FINAL_INFO_FILE \
+      --ignore-errors unused
+
+    # --- 6. Generate HTML and Summary ---
+    - echo "--- 6. Generating HTML Report ---"
+    - mkdir -p $CI_PROJECT_DIR/lcov/html
+    - genhtml $FINAL_INFO_FILE -o $CI_PROJECT_DIR/lcov/html || exit 1
+    - lcov --summary $FINAL_INFO_FILE
+
   artifacts:
     name: "$CI_JOB_NAME"
     paths:
       - lcov
-  variables:
-    COVERAGE_FLAGS: "-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1"
-  coverage: /\s*lines.*:\s(\d+\.\d+\%\s\(\d+\sof\s\d+.*\))/
 
+  coverage: '/^\s*lines.*:\s*(\d+\.\d+)%/'
 
 documentation_doxygen:
   stage: documentation
@@ -176,3 +215,5 @@ release:
         "{\"name\":\"${DEV_DOC_NAME}\",\"url\":\"${DOCS_REGISTRY_URL}${DEV_DOC_NAME}\"}" \
         --assets-link \
         "{\"name\":\"${CPP_DOC_TAR}\",\"url\":\"${DOCS_REGISTRY_URL}${CPP_DOC_TAR}\"}" \
+
+

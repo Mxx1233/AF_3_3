@@ -1,6 +1,7 @@
 build/*
 install/*
 log/*
+lcov/*
 .vscode/*
 __pycache__
 *.ddeb
@@ -12,6 +13,7 @@ debian
 build
 install
 log
+lcov
 Doxygen/
 
 #clion
@@ -98,6 +100,9 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
+
+#MacOS
+.DS_Store
 
 # Android studio 3.1+ serialized cache file
 .idea/caches/build_file_checksums.ser
