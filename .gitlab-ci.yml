@@ -103,39 +103,37 @@ variables:
 coverage:
   stage: analysis
   script:
-    # --- 1. Build (Single build, enabling coverage probes) ---
+    # --- 1. Build ---
     - echo "--- 1. Building all packages with Coverage Flags ---"
     - colcon build --symlink-install --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1" || exit 1
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
-    # Use --ignore-errors mismatch to bypass GTest linking errors
-    - colcon lcov-result --initial --packages-ignore $PACKAGES_TO_IGNORE $PACKAGES_TO_COVERAGE_IGNORE --lcov-args --ignore-errors mismatch || exit 1
+    - lcov --zerocounters --directory . || exit 1
 
-    # --- 3. Run Tests (Generates raw .gcda data) ---
+    # --- 3. Run Tests ---
     - echo "--- 3. Running Tests (on all packages) ---"
     - colcon test --packages-ignore $PACKAGES_TO_IGNORE --executor sequential || exit 1
     - echo "Checking if .gcda files exist..."
     - find build -name "*.gcda"
 
-    # --- 4. Generate Raw LCOV Report (Aggregates all packages) ---
+    # --- 4. Generate Raw LCOV Report ---
     - echo "--- 4. Generating Raw LCOV Report ---"
-    - colcon lcov-result --packages-ignore $PACKAGES_TO_IGNORE $PACKAGE_TO_COVERAGE_IGNORE --verbose || exit 1
-    
-    # --- 5. Clean and Finalize Report (Manual LCOV --remove) ---
+    - mkdir -p lcov
+    - lcov --capture --directory . --output-file lcov/total_coverage.info || exit 1
+
+    # --- 5. Clean and Finalize Report ---
     - echo "--- 5. Cleaning and Finalizing Report (Removing Noise) ---"
-    
-    # Define file paths
     - RAW_INFO_FILE="$CI_PROJECT_DIR/lcov/total_coverage.info"
     - FINAL_INFO_FILE="$CI_PROJECT_DIR/lcov/project_final.info"
-    
-    # CRITICAL FIX: Use lcov --remove to exclude system and test files 
     - |
       echo "Running lcov --remove..."
       lcov --remove "$RAW_INFO_FILE" \
         "/opt/ros/*" \
         "/usr/*" \
+        "*/build/low_level_pkg/gtest/*" \
         "*/test/*" \
+        "*/build/rusty_racer_interfaces/*" \
         "*/msg/detail/*" \
         "*/src/*_node.cpp" \
         -o $FINAL_INFO_FILE \
@@ -146,13 +144,12 @@ coverage:
     - mkdir -p $CI_PROJECT_DIR/lcov/html
     - genhtml $FINAL_INFO_FILE -o $CI_PROJECT_DIR/lcov/html || exit 1
     - lcov --summary $FINAL_INFO_FILE
-  
+
   artifacts:
     name: "$CI_JOB_NAME"
     paths:
       - lcov
-  
-  # Regex to capture the percentage from lcov --summary output
+
   coverage: '/^\s*lines.*:\s*(\d+\.\d+)%/'
 
 documentation_doxygen:
