@@ -99,15 +99,13 @@ variables:
   PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststeps"
   PACKAGES_TO_COVERAGE_IGNORE: "rusty_racer_interfaces"
   # CMake arguments for enabling Gcov/Lcov profiling
-  CXX_FLAGS_ARG: -DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage'
-  C_FLAGS_ARG: -DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1'
 
 coverage:
   stage: analysis
   script:
     # --- 1. Build (Single build, enabling coverage probes) ---
     - echo "--- 1. Building all packages with Coverage Flags ---"
-    - colcon build --symlink-install --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args "$CXX_FLAGS_ARG" "$C_FLAGS_ARG" || exit 1
+    - colcon build --symlink-install --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1" || exit 1
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
@@ -117,6 +115,8 @@ coverage:
     # --- 3. Run Tests (Generates raw .gcda data) ---
     - echo "--- 3. Running Tests (on all packages) ---"
     - colcon test --packages-ignore $PACKAGES_TO_IGNORE --executor sequential || exit 1
+    - echo "Checking if .gcda files exist..."
+    - find build -name "*.gcda"
 
     # --- 4. Generate Raw LCOV Report (Aggregates all packages) ---
     - echo "--- 4. Generating Raw LCOV Report ---"
