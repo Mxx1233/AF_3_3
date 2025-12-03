@@ -137,7 +137,7 @@ coverage:
         "*/msg/detail/*" \
         "*/src/*_node.cpp" \
         -o $FINAL_INFO_FILE \
-        || { echo "ERROR: LCOV remove failed! Check file paths."; exit 1; }
+      --ignore-errors unused
 
     # --- 6. Generate HTML and Summary ---
     - echo "--- 6. Generating HTML Report ---"
