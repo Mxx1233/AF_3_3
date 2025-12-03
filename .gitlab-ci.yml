@@ -96,7 +96,7 @@ code:
 
 variables:
   # Packages that should be ignored from build, test, and coverage
-  PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststep rusty_racer_interfaces"
+  PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststeps"
   # CMake arguments for enabling Gcov/Lcov profiling
   COV_CMAKE_ARGS: "-DCMAKE_CXX_FLAGS='-fprofile-arcs -ftest-coverage' -DCMAKE_C_FLAGS='-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1'"
 
