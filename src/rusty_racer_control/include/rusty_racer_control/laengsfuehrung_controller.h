@@ -1,0 +1,99 @@
+/**
+ * @file laengsfuehrung_controller.h
+ * @brief PI-Geschwindigkeitsregler (Geschwindigkeitsdomäne)
+ * @author zx
+ * @date 2025-12
+ */
+
+#pragma once
+#include <algorithm>
+
+/**
+ * @struct PIParams
+ * @brief PI-Reglerparameter
+ */
+struct PIParams
+{
+    double Kp = 1.0;      // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
+    double Ki = 1.5;      // Integralverstärkung (empfohlen: 0.5 - 2.0)
+    double v_min = 0.0;   // Minimale Geschwindigkeit [m/s]
+    double v_max = 1.5;   // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
+};
+
+/**
+ * @struct PIState
+ * @brief PI-Reglerzustand
+ */
+struct PIState
+{
+    double v_cmd = 0.0;   // Aktueller Geschwindigkeitsbefehl [m/s]
+    double e_pre = 0.0;   // Vorheriger Geschwindigkeitsfehler [m/s]
+};
+
+/**
+ * @brief Initialisiert PI-Regler
+ * @return Initialisierter Zustand
+ */
+inline PIState init_pi()
+{
+    PIState s;
+    s.v_cmd = 0.0;
+    s.e_pre = 0.0;
+    return s;
+}
+
+/**
+ * @brief PI-Geschwindigkeitsregler - Inkrementelle PI-Berechnung
+ * @param p Reglerparameter
+ * @param s Reglerzustand (wird modifiziert)
+ * @param v_ref Sollgeschwindigkeit [m/s]
+ * @param v_k Aktuelle Geschwindigkeit [m/s]
+ * @param dt Abtastzeit [s]
+ * @return v_cmd Geschwindigkeitsbefehl [m/s]
+ * 
+ * Algorithmus:
+ *   1. Fehler berechnen: e_k = v_ref - v_k
+ *   2. Inkrementelles PI: Δv = Kp·(e_k - e_pre) + Ki·dt·e_k
+ *   3. Befehl aktualisieren: v_cmd = v_cmd_pre + Δv
+ *   4. Begrenzen auf [v_min, v_max]
+ */
+inline double pi_step(
+    const PIParams& p,
+    PIState& s,
+    double v_ref,
+    double v_k,
+    double dt)
+{
+    // Fehler berechnen
+    double e_k = v_ref - v_k;
+    
+    // Inkrementelles PI
+    double delta_v = p.Kp * (e_k - s.e_pre) + p.Ki * dt * e_k;
+    
+    // Befehl aktualisieren
+    s.v_cmd += delta_v;
+    
+    // Begrenzung
+    s.v_cmd = std::max(p.v_min, std::min(s.v_cmd, p.v_max));
+    
+    // Zustand speichern
+    s.e_pre = e_k;
+    
+    return s.v_cmd;
+}
+
+/**
+ * @brief Gibt PI-Reglerzustand als String zurück (für Debugging)
+ * @param s Reglerzustand
+ * @param v_ref Sollgeschwindigkeit [m/s]
+ * @param v_k Aktuelle Geschwindigkeit [m/s]
+ * @return Formatierter Zustandsstring
+ */
+inline const char* pi_state_string(const PIState& s, double v_ref, double v_k)
+{
+    static char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "PI-Zustand: v_cmd=%.3f m/s, e_aktuell=%.3f, e_pre=%.3f, v_soll=%.3f, v_ist=%.3f",
+             s.v_cmd, (v_ref - v_k), s.e_pre, v_ref, v_k);
+    return buffer;
+}
