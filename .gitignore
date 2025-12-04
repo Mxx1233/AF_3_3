@@ -1,6 +1,7 @@
 build/*
 install/*
 log/*
+lcov/*
 .vscode/*
 __pycache__
 *.ddeb
@@ -8,10 +9,12 @@ __pycache__
 obj-x86_64-linux-gnu
 debian
 
+
 #ros2
 build
 install
 log
+lcov
 Doxygen/
 
 #clion
