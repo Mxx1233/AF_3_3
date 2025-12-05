@@ -1,0 +1,46 @@
+== Vorschläge für die ersten Schritte (Sprint 1)
+
+**Ziel für alle Teams:** Das Hauptziel dieser ersten Phase ist es, ein lauffähiges Grundgerüst zu schaffen ("Make it run!"). Die perfekte Implementierung der Algorithmen ist zweitrangig.
+
+---
+
+=== Team Wahrnehmung (Perception)
+
+*Ziel:* Empfangen von RealSense-Bildern und Veröffentlichen einer `LaneDeviation`-Nachricht.
+
+.Erste Schritte:
+. **Kamera visualisieren:** Bringt die Kamera in RViz2 zum Laufen. Stellt sicher, dass ihr den `/camera/color/image_raw`-Topic sehen könnt.
+. **`pycamcal`-Kalibrierung durchführen:** Schließt die externe Kamerakalibrierung mit dem `pycamcal`-Werkzeug ab, um die Homographie-Matrix ($H$-Matrix) zu erhalten.
+. **IPM-Knoten erstellen:** Schreibt einen einfachen Knoten, der nur die Inverse-Perspektiv-Transformation (IPM) durchführt und das Ergebnis (das Vogelperspektivbild) auf einem neuen Topic veröffentlicht. Überprüft in RViz2, ob die Transformation korrekt aussieht.
+. **Fahrspurerkennung hinzufügen:** Erst wenn die IPM stabil funktioniert, fügt die Logik zur eigentlichen Fahrspurerkennung hinzu.
+
+---
+
+=== Team Regelung (Control)
+
+*Ziel:* Empfangen von `LaneDeviation`- und `odom`-Nachrichten und Senden von Steuerbefehlen an die Hardware.
+
+.Erste Schritte:
+. **`uc_bridge_adapter_node` zuerst implementieren:**
+** Erstellt diesen Knoten, der den `/motor_command`-Topic abonniert.
+** Schreibt die Logik zur Umwandlung der physikalischen Einheiten (Radiant, 0-1) in die hardware-spezifischen `std_msgs/Int16`-Werte.
+** Veröffentlicht die umgewandelten Werte auf den Topics `/uc_bridge/set_steering` und `/uc_bridge/set_motor_level_forward`.
+. **Adapter testen:** Erstellt ein einfaches Python-Skript oder verwendet `ros2 topic pub`, um manuell eine `MotorCommand`-Nachricht zu senden. Überprüft dann mit `ros2 topic echo`, ob der `adapter_node` die korrekten `std_msgs/Int16`-Befehle ausgibt.
+
+---
+
+=== Team Zustandsschätzung (State Estimation)
+
+*Ziel:* Empfangen von Radgeschwindigkeits- (`uc_bridge`) und IMU-Daten (`uc_bridge`) und Veröffentlichen der `/odom`-Nachricht sowie der TF-Transformation.
+
+[NOTE]
+====
+*Korrektur zur IMU-Quelle:*
+In einer früheren Diskussion wurde fälschlicherweise die IMU der Kamera als Datenquelle in Betracht gezogen. Wir halten uns an unsere finale Entscheidung: Die IMU-Daten werden **ausschließlich** von der **`uc_bridge`** über den Topic `/imu_data` bezogen, **nicht** von der RealSense-Kamera.
+====
+
+.Erste Schritte (Inkrementelle Implementierung):
+. **Keinen EKF zu Beginn:** Implementiert den vollständigen Extended Kalman Filter (EKF) **nicht** sofort. Geht schrittweise vor.
+. **Schritt 1 (Lineargeschwindigkeit):** Schreibt einen Knoten, der **nur** den `/dt_data`-Topic von der `uc_bridge` abonniert. Berechnet daraus die Lineargeschwindigkeit `v` und veröffentlicht eine `/odom`-Nachricht, die **nur das Geschwindigkeitsfeld (`twist.linear.x`)** enthält.
+. **Schritt 2 (Winkelgeschwindigkeit & Gierwinkel):** Erweitert den Knoten, sodass er zusätzlich den `/imu_data`-Topic von der `uc_bridge` abonniert. Führt eine **einfache Integration** der Gierrate `w` durch, um den Gierwinkel `theta` zu schätzen. Aktualisiert die `/odom`-Nachricht, um nun auch die Orientierung (`pose.orientation`) zu beinhalten.
+. **Schritt 3 (Vollständige Implementierung):** Erst wenn die beiden ersten Schritte funktionieren, kombiniert alles und geht schrittweise zur Implementierung des vollständigen EKF über.

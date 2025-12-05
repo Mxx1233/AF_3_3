@@ -1,0 +1,182 @@
+= "Rusty Racer" Team-Arbeits-Charta (Team Charter)
+:author: Shengtao Wen
+:group: Gruppe C - Rusty Racer
+:revnumber: 0.2.0
+:revdate: 2025-11-06
+:revremark: Den Abschnitt "Unser Branching-Modell (Git-Flow)" hinzugefügt.
+:toc: left
+:toclevels: 2
+:sectnums:
+:cpp: C++
+
+IMPORTANT:: Dieses Dokument ist unsere verbindliche Arbeitsgrundlage. Jedes Mitglied ist dafür verantwortlich, diese Regeln zu kennen und einzuhalten. Es dient als lebendes Dokument und wird im Laufe des Projekts entsprechend dem Fortschritt und den auftretenden Herausforderungen angepasst. Alle Mitglieder werden über wesentliche Änderungen informiert.
+
+[frame=topbot,grid=rows,cols="1,2,6"]
+|===
+| Version | Date       | Remark
+| 0.1.0   | 2025-11-06 | Erste Version der Team-Charta.
+| 0.2.0   | 2025-11-06 | Den Abschnitt "Unser Branching-Modell (Git-Flow)" hinzugefügt.
+|===
+
+== Kernprinzipien
+
+. *Ohne Issue keine Arbeit:* Jede Aufgabe, die mehr als eine halbe Stunde in Anspruch nimmt, **muss** als GitLab Issue erfasst werden.
+. *Git-Flow als Standard:* Die gesamte Entwicklung **muss** dem Git-Flow-Workflow folgen.
+. *Merge Request (MR) als einziger Weg:* Code wird **ausschließlich** über Merge Requests in die Haupt-Branches (`main`, `develop`) integriert. Direktes Pushen ist **verboten**.
+. *Zwei-Phasen-Qualitätstor:* Ein MR kann nur gemerged werden, wenn er **sowohl** die Code-Review-Phase **als auch** die CI/CD-Pipeline erfolgreich passiert hat.
+. *Dokumentation synchron zum Code:* Code-Änderungen müssen von entsprechenden Aktualisierungen in der Dokumentation (Kommentare, READMEs etc.) begleitet werden.
+
+
+== GitLab Issues - Unser Projekt-Cockpit
+
+Die Verwaltung aller Aufgaben erfolgt ausschließlich über GitLab Issues. Das Prinzip lautet: *"Ohne Issue keine Arbeit."*
+
+=== Erstellung von Issues
+
+Jedes Issue muss klar definierte Metadaten über Labels erhalten und eine strukturierte Beschreibung aufweisen.
+
+. *Titel (Title):*
++
+--
+Der Titel beschreibt **ausschließlich** das Ziel der Aufgabe – kurz, klar und prägnant. Er darf **keine** Präfixe wie `[Feature]` oder `[Bug]` enthalten.
+
+*Gutes Beispiel:* `PID-Regler für die Spurhaltung implementieren`
+*Schlechtes Beispiel:* `[Feature] [Control] PID-Regler`
+--
+
+. *Labels:*
++
+--
+Alle Metadaten werden über Labels gesteuert. Jedes Issue **muss** mindestens die folgenden zwei Label-Typen haben:
+
+* *Typ-Label (präfix `Type::`):* Definiert die Art der Aufgabe. Es darf nur **ein** Typ-Label pro Issue geben (Scoped Label).
+* *Modul-Label (präfix `Module::`):* Ordnet die Aufgabe einem Projektbereich zu.
+
+Zusätzlich können weitere Labels wie `Priority::` verwendet werden.
+--
+
+. *Beschreibung (Description) nach Typ:*
++
+--
+Die Beschreibung muss je nach Issue-Typ strukturiert sein:
+
+* *Für `Type::Feature` (Neue Funktion):*
+** *Ziel (Goal):* Was ist der Zweck dieser Funktion aus System- oder Benutzersicht?
+** *Akzeptanzkriterien (Acceptance Criteria):* Eine klare, testbare Liste von Bedingungen, die erfüllt sein müssen, damit die Funktion als "fertig" gilt.
+
+* *Für `Type::Bug` (Fehler):*
+** *Schritte zur Reproduktion (Steps to Reproduce):* Eine exakte Anleitung, wie der Fehler zuverlässig reproduziert werden kann.
+** *Erwartetes Verhalten (Expected Behavior):* Was hätte stattdessen passieren sollen?
+** *Tatsächliches Verhalten (Actual Behavior):* Was ist tatsächlich passiert? (inkl. Logs, Screenshots etc.)
+
+* *Für `Type::Task` (Aufgabe):*
+** *Ziel (Goal):* Was soll mit dieser technischen Aufgabe erreicht werden?
+** *Definition of Done:* Wann gilt diese Aufgabe als erledigt?
+
+* *Für `Type::Documentation` (Dokumentation):*
+** *Ziel (Goal):* Welcher Teil der Dokumentation soll erstellt oder aktualisiert werden?
+--
+
+. *Zuweisung (Assignee):*
++
+--
+Jedes Issue, an dem aktiv gearbeitet wird, **muss** dem verantwortlichen Teammitglied zugewiesen sein.
+--
+
+=== Status-Management (Issue Board)
+
+Der Lebenszyklus eines Issues wird über das Issue Board visualisiert und gesteuert. Die Spalten repräsentieren den Status der Aufgabe.
+
+. *To Do (Zu erledigen):* Alle neuen und geplanten Aufgaben.
+. *In Progress (In Bearbeitung):* Ein Entwickler beginnt mit der Arbeit an einem Issue. -> Die Issue-Karte wird in diese Spalte verschoben.
+. *In Review (In Überprüfung):* Ein Merge Request für das Issue wird erstellt. -> Die Issue-Karte wird in diese Spalte verschoben.
+. *Done (Erledigt):* Der Merge Request wird erfolgreich gemerged. -> Das Issue wird (automatisch) geschlossen und erscheint in dieser Spalte.
+
+== Git & Merge Request (MR) Prozess
+
+=== Unser Branching-Modell (Git-Flow)
+
+Wir folgen einem strikten Git-Flow-Workflow, der auf langlebigen und kurzlebigen Branches basiert. Das Verständnis der Rollen dieser Branches ist entscheidend für eine reibungslose Zusammenarbeit.
+
+. *`main`-Branch:*
++
+--
+* *Zweck:* Produktions-Branch. Enthält ausschließlich stabile, getestete und release-fähige Versionen des Projekts.
+* *Regeln:*
+** **Direktes Pushen ist strengstens verboten.**
+** Code gelangt in diesen Branch nur durch Merges aus einem `release`- oder `hotfix`-Branch. (Für dieses Projektseminar vereinfacht: durch Merges aus dem `develop`-Branch am Ende von Meilensteinen).
+--
+
+. *`develop`-Branch:*
++
+--
+* *Zweck:* Integrations-Branch. Dies ist die Hauptentwicklungs-Linie, die alle abgeschlossenen Features für das nächste Release sammelt.
+* *Regeln:*
+** **Direktes Pushen ist strengstens verboten.**
+** Der `develop`-Branch sollte jederzeit kompilierbar sein und alle Tests bestehen.
+** Code gelangt in diesen Branch ausschließlich durch das Mergen von `feature`-Branches.
+--
+
+. *`feature/*`-Branches:*
++
+--
+* *Zweck:* Entwicklung neuer Funktionen oder Bearbeitung spezifischer Tasks. Hier findet der Großteil der täglichen Arbeit statt.
+* *Lebenszyklus:*
+. **Erstellung:** Ein `feature`-Branch wird **immer** vom aktuellen `develop`-Branch abgezweigt (`git checkout -b feature/... develop`).
+. **Entwicklung:** Alle Commits für die Aufgabe werden in diesem Branch gemacht.
+. **Abschluss:** Wenn die Funktion fertig ist, wird der Branch über einen Merge Request zurück in den `develop`-Branch gemerged.
+. **Löschung:** Nach dem erfolgreichen Merge wird der `feature`-Branch gelöscht.
+--
+
+=== Branch- und Commit-Konventionen
+
+* *Branch-Namen:* Feature-Branches müssen mit `feature/` beginnen (z.B., `feature/lane-detection-hough`).
+* *Commit-Nachrichten:* Müssen aussagekräftig sein und das Issue referenzieren, das sie adressieren (z.B., `feat: Add PID controller class. Closes #15`).
+
+=== Der Merge Request (MR) Lebenszyklus
+
+. *Erstellung:* Der MR-Autor muss in der Beschreibung klar formulieren:
+** Was wurde gemacht?
+** Welches Issue wird geschlossen? (z.B., `Closes #15`)
+** Wie kann die Änderung getestet werden?
+. *Code Review:* Jeder MR durchläuft eine obligatorische Review-Phase.
+. *Automatisierte Prüfung:* Die CI/CD-Pipeline muss für den MR erfolgreich durchlaufen (grüner Haken).
+. *Merge:* Erst nach erfolgreichem Review und bestandener CI-Pipeline darf der MR vom zuständigen Maintainer (initial der Teamleiter) gemerged werden.
+
+=== Code-Review-Regeln
+
+. *Obligatorische Doppel-Prüfung:* Jeder MR **muss** von mindestens **zwei** Personen geprüft und genehmigt (approved) werden.
+
+. *Prüfer 1 (Funktionaler Peer):* Dies **muss** ein Teammitglied sein, das am engsten mit dem Funktionsbereich des MR vertraut ist (z.B., Wahrnehmungs-Teammitglieder prüfen sich gegenseitig).
+
+. *Prüfer 2 (Schnittstellen- / Architektur-Prüfer):*
+** *Regelfall (Schnittstellen-Fokus):* Wenn der MR eine externe Schnittstelle (ROS Topic/Service) ändert, **muss** einer der Prüfer ein direkter **"Downstream-Consumer"** dieser Schnittstelle sein. (Beispiel: Ein MR des Wahrnehmungs-Teams muss von einem Mitglied des Regelungs-Teams geprüft werden).
+** *Ausnahmefall (Architektur-Fokus):* Wenn keine direkte Schnittstelle geändert wird, übernimmt der **Teamleiter** diese Rolle, um die Übereinstimmung mit der Gesamtarchitektur sicherzustellen.
+
+. *Freiwillige Einbeziehung des Teamleiters:*
+NOTE:: Der Autor eines MR wird ermutigt, den **Teamleiter zusätzlich per `@`-Mention** in den Review-Prozess einzubeziehen, insbesondere wenn: a) die Änderung als kritisch oder architektonisch bedeutsam erachtet wird, oder b) der Autor sich bei der Lösung unsicher ist und eine dritte Meinung wünscht.
+
+. *Ermächtigung und Vertrauen:*
+TIP:: Ein MR kann auch ohne die explizite Genehmigung des Teamleiters gemerged werden, solange die oben genannten Regeln (zwei Prüfer, inkl. Downstream-Consumer) eingehalten werden. Dies dient der Effizienzsteigerung und fördert die kollektive Verantwortung des Teams. Der Teamleiter behält sich jedoch das Recht vor, bei kritischen MRs ein Veto einzulegen oder als endgültiger Schiedsrichter bei Meinungsverschiedenheiten zu fungieren.
+
+
+== Code- und Test-Qualität
+
+=== Code-Stil
+
+* Alle {cpp} Codes **müssen** den offiziellen ROS2 Coding Guidelines (basierend auf Google {cpp} Style Guide) folgen.
+* Entwickler **müssen** vor dem `git push` den Befehl `ament_uncrustify --reformat` ausführen und alle verbleibenden `cpplint`-Fehler manuell beheben.
+
+=== Unit-Tests
+
+* Alle Kernalgorithmen und Geschäftslogiken **müssen** von GTest Unit-Tests abgedeckt sein.
+* Entwickler **müssen** vor dem `git push` lokal `colcon test` ausführen und sicherstellen, dass alle Tests (inkl. Linter) erfolgreich durchlaufen.
+
+
+== Ausnahmeregelungen
+
+* *Notfall-Hotfix:* Bei kritischen Fehlern, die den `develop`-Branch blockieren, kann der Teamleiter einen beschleunigten Hotfix-Prozess einleiten.
+* *Übungs-MRs:* Merge Requests, die nur zu Übungszwecken (z.B., "Hello World"-Tutorial) erstellt wurden, sollen vom Autor nach erfolgreichem CI-Lauf **geschlossen (Closed)** und **nicht gemerged (Not Merged)** werden.
+
+
+
