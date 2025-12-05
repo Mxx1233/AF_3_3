@@ -23,7 +23,7 @@ constexpr double EPSILON = 1e-6;
 
 class CommonFunctionsTest : public ::testing::Test {
 protected:
-    void SetUp() override {}
+  void SetUp() override {}
 };
 
 // angleWrap Tests (8 Tests)
@@ -91,18 +91,19 @@ TEST_F(CommonFunctionsTest, ClampValueAboveMax) {
 
 class PIControllerTest : public ::testing::Test {
 protected:
-    PIParams params;
-    PIState state;
+  PIParams params;
+  PIState state;
 
-    void SetUp() override {
+  void SetUp() override
+  {
         // Standard-Parameter
-        params.Kp = 1.0;
-        params.Ki = 1.5;
-        params.v_min = 0.0;
-        params.v_max = 1.5;
+    params.Kp = 1.0;
+    params.Ki = 1.5;
+    params.v_min = 0.0;
+    params.v_max = 1.5;
 
-        state = init_pi();
-    }
+    state = init_pi();
+  }
 };
 
 TEST_F(PIControllerTest, Initialization) {
@@ -152,7 +153,7 @@ TEST_F(PIControllerTest, NegativeErrorMedium) {
 TEST_F(PIControllerTest, MaxVelocityLimit) {
     // Test Maximalgeschwindigkeitsbegrenzung
     for (int i = 0; i < 100; i++) {
-        pi_step(params, state, 2.0, 0.0, 0.02);
+    pi_step(params, state, 2.0, 0.0, 0.02);
     }
     EXPECT_LE(state.v_cmd, params.v_max);
 }
@@ -161,7 +162,7 @@ TEST_F(PIControllerTest, MinVelocityLimit) {
     // Test Minimalgeschwindigkeitsbegrenzung
     state.v_cmd = 0.5;
     for (int i = 0; i < 50; i++) {
-        pi_step(params, state, 0.0, 0.5, 0.02);
+    pi_step(params, state, 0.0, 0.5, 0.02);
     }
     EXPECT_GE(state.v_cmd, params.v_min);
 }
@@ -207,9 +208,9 @@ TEST_F(PIControllerTest, ConvergenceTest) {
     double dt = 0.02;
 
     for (int i = 0; i < 100; i++) {
-        double v_cmd = pi_step(params, state, v_ref, v_actual, dt);
+    double v_cmd = pi_step(params, state, v_ref, v_actual, dt);
         // Vereinfachte Fahrzeugdynamik: dv/dt = (v_cmd - v) / tau
-        v_actual += (v_cmd - v_actual) / tau * dt;
+    v_actual += (v_cmd - v_actual) / tau * dt;
     }
 
     // Sollte nahe Sollwert konvergieren
@@ -222,7 +223,7 @@ TEST_F(PIControllerTest, ConvergenceTest) {
 
 class MotorMappingTest : public ::testing::Test {
 protected:
-    double v_max = 1.5;
+  double v_max = 1.5;
 };
 
 TEST_F(MotorMappingTest, ZeroSpeed) {
@@ -276,11 +277,11 @@ TEST_F(MotorMappingTest, LinearityCheck) {
 
 class LateralControllerTest : public ::testing::Test {
 protected:
-    double v_init = 0.5;
-    double L = 0.257;
-    double L_h = 0.0;
-    double kp = 3.5;
-    double kd = 0.0;
+  double v_init = 0.5;
+  double L = 0.257;
+  double L_h = 0.0;
+  double kp = 3.5;
+  double kd = 0.0;
 };
 
 TEST_F(LateralControllerTest, Initialization) {
@@ -359,7 +360,8 @@ TEST_F(LateralControllerTest, CombinedError) {
 // Hauptfunktion
 // ============================================================================
 
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+int main(int argc, char **argv)
+{
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

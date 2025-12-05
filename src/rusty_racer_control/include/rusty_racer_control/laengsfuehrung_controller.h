@@ -14,10 +14,10 @@
  */
 struct PIParams
 {
-    double Kp = 1.0;      // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
-    double Ki = 1.5;      // Integralverstärkung (empfohlen: 0.5 - 2.0)
-    double v_min = 0.0;   // Minimale Geschwindigkeit [m/s]
-    double v_max = 1.5;   // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
+  double Kp = 1.0;        // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
+  double Ki = 1.5;        // Integralverstärkung (empfohlen: 0.5 - 2.0)
+  double v_min = 0.0;     // Minimale Geschwindigkeit [m/s]
+  double v_max = 1.5;     // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
 };
 
 /**
@@ -26,8 +26,8 @@ struct PIParams
  */
 struct PIState
 {
-    double v_cmd = 0.0;   // Aktueller Geschwindigkeitsbefehl [m/s]
-    double e_pre = 0.0;   // Vorheriger Geschwindigkeitsfehler [m/s]
+  double v_cmd = 0.0;     // Aktueller Geschwindigkeitsbefehl [m/s]
+  double e_pre = 0.0;     // Vorheriger Geschwindigkeitsfehler [m/s]
 };
 
 /**
@@ -36,10 +36,10 @@ struct PIState
  */
 inline PIState init_pi()
 {
-    PIState s;
-    s.v_cmd = 0.0;
-    s.e_pre = 0.0;
-    return s;
+  PIState s;
+  s.v_cmd = 0.0;
+  s.e_pre = 0.0;
+  return s;
 }
 
 /**
@@ -50,7 +50,7 @@ inline PIState init_pi()
  * @param v_k Aktuelle Geschwindigkeit [m/s]
  * @param dt Abtastzeit [s]
  * @return v_cmd Geschwindigkeitsbefehl [m/s]
- * 
+ *
  * Algorithmus:
  *   1. Fehler berechnen: e_k = v_ref - v_k
  *   2. Inkrementelles PI: Δv = Kp·(e_k - e_pre) + Ki·dt·e_k
@@ -58,28 +58,28 @@ inline PIState init_pi()
  *   4. Begrenzen auf [v_min, v_max]
  */
 inline double pi_step(
-    const PIParams& p,
-    PIState& s,
-    double v_ref,
-    double v_k,
-    double dt)
+  const PIParams & p,
+  PIState & s,
+  double v_ref,
+  double v_k,
+  double dt)
 {
     // Fehler berechnen
-    double e_k = v_ref - v_k;
-    
+  double e_k = v_ref - v_k;
+
     // Inkrementelles PI
-    double delta_v = p.Kp * (e_k - s.e_pre) + p.Ki * dt * e_k;
-    
+  double delta_v = p.Kp * (e_k - s.e_pre) + p.Ki * dt * e_k;
+
     // Befehl aktualisieren
-    s.v_cmd += delta_v;
-    
+  s.v_cmd += delta_v;
+
     // Begrenzung
-    s.v_cmd = std::max(p.v_min, std::min(s.v_cmd, p.v_max));
-    
+  s.v_cmd = std::max(p.v_min, std::min(s.v_cmd, p.v_max));
+
     // Zustand speichern
-    s.e_pre = e_k;
-    
-    return s.v_cmd;
+  s.e_pre = e_k;
+
+  return s.v_cmd;
 }
 
 /**
@@ -89,11 +89,11 @@ inline double pi_step(
  * @param v_k Aktuelle Geschwindigkeit [m/s]
  * @return Formatierter Zustandsstring
  */
-inline const char* pi_state_string(const PIState& s, double v_ref, double v_k)
+inline const char * pi_state_string(const PIState & s, double v_ref, double v_k)
 {
-    static char buffer[256];
-    snprintf(buffer, sizeof(buffer),
+  static char buffer[256];
+  snprintf(buffer, sizeof(buffer),
              "PI-Zustand: v_cmd=%.3f m/s, e_aktuell=%.3f, e_pre=%.3f, v_soll=%.3f, v_ist=%.3f",
              s.v_cmd, (v_ref - v_k), s.e_pre, v_ref, v_k);
-    return buffer;
+  return buffer;
 }
