@@ -111,7 +111,7 @@ private:
   void laneCallback(const rusty_racer_interfaces::msg::LaneDeviation::SharedPtr msg)
   {
         // Daten aus LaneDeviation-Nachricht extrahieren
-    
+
     double y = msg->lateral_error;              // Querabweichung [m]
     double phi_k = msg->heading_error;          // Kursabweichung [rad]
         // double curvature = msg->curvature;   // Optional: Krümmung [1/m]

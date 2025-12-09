@@ -28,14 +28,13 @@ public:
   }
 
 private:
-
   int phase_counter = 0;
   double turning = 1.0;
   void timer_callback()
   {
     auto message = rusty_racer_interfaces::msg::LaneDeviation();
     phase_counter++;
-    if (phase_counter > 100){
+    if (phase_counter > 100) {
       phase_counter = 0;
       turning = -1.0 * turning;
     }
@@ -46,11 +45,11 @@ private:
 
     // 2. Fill the Data based on your requirements
     message.lateral_error = 0;  // Always -0.1
-    message.curvature = 0.0f;     
+    message.curvature = 0.0f;
 
     // You didn't specify heading_error, so initializing to 0.0
     // (Or calculated based on geometry if needed)
-    message.heading_error = turning * 20/360*M_PI * 1.0f;
+    message.heading_error = turning * 20 / 360 * M_PI * 1.0f;
 
     // 3. Publish
     publisher_->publish(message);

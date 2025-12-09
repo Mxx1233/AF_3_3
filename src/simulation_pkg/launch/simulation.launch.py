@@ -9,8 +9,12 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 # from launch_ros.actions import Node
 
 
-__ucbridge = IncludeLaunchDescription(PythonLaunchDescriptionSource(
-    os.path.join(get_package_share_directory('psaf_launch'), 'launch', 'ucbridge_old.launch.py')))
+__ucbridge = IncludeLaunchDescription(
+    PythonLaunchDescriptionSource(
+        os.path.join(
+            get_package_share_directory('psaf_launch'),
+            'launch',
+            'ucbridge_old.launch.py')))
 
 # __realsense2_camera = IncludeLaunchDescription(PythonLaunchDescriptionSource(
 #     os.path.join(get_package_share_directory('psaf_launch'), 'launch',
@@ -42,16 +46,16 @@ def generate_launch_description():
     return LaunchDescription([
         LogInfo(msg=['Start model car for the Carolo-Cup']),
         __ucbridge,
-        
+
         LogInfo(msg=['Start state_estimation']),
         __state_estimation,
-        
+
         LogInfo(msg=['Start uc_bridge_adapter']),
         __uc_bridge_adapter,
-        
+
         LogInfo(msg=['Start control']),
         __control,
-        
+
         LogInfo(msg=['Start svision']),
         __vision,
     ])

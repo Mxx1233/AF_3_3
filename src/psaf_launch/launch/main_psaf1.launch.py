@@ -12,8 +12,12 @@ from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition
 
 
-__ucbridge = IncludeLaunchDescription(PythonLaunchDescriptionSource(
-    os.path.join(get_package_share_directory('psaf_launch'), 'launch', 'ucbridge_old.launch.py')))
+__ucbridge = IncludeLaunchDescription(
+    PythonLaunchDescriptionSource(
+        os.path.join(
+            get_package_share_directory('psaf_launch'),
+            'launch',
+            'ucbridge_old.launch.py')))
 
 
 __state_estimation = IncludeLaunchDescription(PythonLaunchDescriptionSource(
@@ -29,15 +33,15 @@ __uc_bridge_adapter = IncludeLaunchDescription(PythonLaunchDescriptionSource(
 __control = IncludeLaunchDescription(PythonLaunchDescriptionSource(
     os.path.join(get_package_share_directory('rusty_racer_control'), 'launch',
                  'control.launch.py')
-)) 
+))
+
 
 def generate_launch_description():
 
     record_arg = DeclareLaunchArgument(
         'record',
         default_value='true',
-        description='Set to "true" to enable data recording, "false" to disable.'
-    )
+        description='Set to "true" to enable data recording, "false" to disable.')
 
     recorder_node = Node(
         package='log_pkg',
@@ -52,7 +56,7 @@ def generate_launch_description():
         record_arg,
 
         __ucbridge,
-        
+
         LogInfo(msg=['Start system layout']),
         __state_estimation,
         __uc_bridge_adapter,
