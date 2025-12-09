@@ -13,6 +13,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
+find_package(rusty_racer_interfaces REQUIRED)
 
 # Include-Verzeichnisse / Include Directories
 include_directories(include)
@@ -26,12 +27,18 @@ ament_target_dependencies(control_node
         nav_msgs
         tf2
         tf2_geometry_msgs
+        rusty_racer_interfaces
 )
 
 # Installation
 install(TARGETS
         control_node
         DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/

@@ -2,6 +2,11 @@
 #        Adapterknoten der unteren Ebene gesendet wird.
 # Die Einheiten sind physikalische Einheiten, entkoppelt von der Hardware.
 
+# Standard-Nachrichtenkopf, der einen genauen Zeitstempel und eine Koordinatensystem-ID enthalten muss.
+# stamp: Zeitstempel des Eingabebildes.
+# frame_id: "base_link"
+std_msgs/Header header
+
 # Gewünschter Lenkwinkel des Servos in Radiant (radians).
 # Konvention: Positive Werte bedeuten eine Rechtskurve, negative eine Linkskurve.
 float32 steering_angle

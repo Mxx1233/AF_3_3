@@ -15,7 +15,7 @@
 struct PIParams
 {
   double Kp = 1.0;        // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
-  double Ki = 1.5;        // Integralverstärkung (empfohlen: 0.5 - 2.0)
+  double Ki = 0.01;        // Integralverstärkung (empfohlen: 0.5 - 2.0)
   double v_min = 0.0;     // Minimale Geschwindigkeit [m/s]
   double v_max = 1.5;     // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
 };

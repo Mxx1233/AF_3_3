@@ -21,7 +21,7 @@
 #define DT_TOPIC          "/dt_data"   // Zeit für eine 1/8*Radumdrehung
 
 // Veröffentlichungsrate
-#define PUBLISH_RATE_HZ    50.0   // Hz (z.B. 50 Hz)
+#define PUBLISH_RATE_HZ    100.0   // Hz (z.B. 50 Hz)
 
 class StateEstimationNode : public rclcpp::Node
 {

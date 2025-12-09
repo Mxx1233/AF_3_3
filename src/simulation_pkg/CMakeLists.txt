@@ -11,6 +11,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(rusty_racer_interfaces REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -28,7 +29,7 @@ add_executable(fake_uc_bridge src/fake_uc_bridge.cpp)
 ament_target_dependencies(fake_uc_bridge rclcpp sensor_msgs std_msgs)
 
 add_executable(fake_vision_node src/fake_vision_node.cpp)
-ament_target_dependencies(fake_vision_node rclcpp geometry_msgs)
+ament_target_dependencies(fake_vision_node rclcpp geometry_msgs rusty_racer_interfaces)
 
 install(TARGETS
   fake_uc_bridge

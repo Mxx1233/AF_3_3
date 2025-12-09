@@ -24,6 +24,9 @@ public:
   UcBridgeAdapterNode()
   : rclcpp::Node("uc_bridge_adapter_node")
   {
+    UcMapper::Config config;
+    mapper_ = std::make_unique<UcMapper>(config);
+
     // Subscriber: MotorCommand (Lenkwinkel [rad], Motorlevel [-1.0..1.0])
     motor_command_sub_ = create_subscription<rusty_racer_interfaces::msg::MotorCommand>(
       MOTOR_COMMAND_TOPIC, 10,
@@ -63,26 +66,29 @@ private:
     std_msgs::msg::Int16 motor_level_forward_msg;
     std_msgs::msg::Int16 motor_level_backward_msg;
 
-    motor_level_forward_msg.data = output.motor_fwd;
-    motor_level_backward_msg.data = output.motor_bwd;
+    // motor_level_forward_msg.data = output.motor_fwd;
+    // motor_level_backward_msg.data = output.motor_bwd;
 
-    set_motor_level_forward_pub_->publish(motor_level_forward_msg);
-    set_motor_level_backward_pub_->publish(motor_level_backward_msg);
 
     if (output.motor_fwd > 0) {
-      RCLCPP_INFO(get_logger(), "Motor Level Forward: %d", output.motor_fwd);
-    } else if (output.motor_bwd > 0) {
-      RCLCPP_INFO(get_logger(), "Motor Level Backward: %d", output.motor_bwd);
-    } else {
+      motor_level_forward_msg.data = output.motor_fwd;
       set_motor_level_forward_pub_->publish(motor_level_forward_msg);
-      RCLCPP_INFO(get_logger(), "Motor Stopped with Forward: %d Backward: %d",
-        output.motor_fwd, output.motor_bwd);
+
+    } else if (output.motor_bwd > 0) {
+      motor_level_backward_msg.data = output.motor_bwd;
+      set_motor_level_backward_pub_->publish(motor_level_backward_msg);
+
+    } else {
+      motor_level_forward_msg.data = 0;
+      motor_level_backward_msg.data = 0;
+      set_motor_level_forward_pub_->publish(motor_level_forward_msg);
+      set_motor_level_backward_pub_->publish(motor_level_backward_msg);
     }
   }
 
   std::unique_ptr<UcMapper> mapper_;
 
-  // --- ROS I/O ---
+  // --- ROS I/O ---_forward_pub_->publish(motor_level_forward_msg);
   rclcpp::Subscription<rusty_racer_interfaces::msg::MotorCommand>::SharedPtr motor_command_sub_;
   rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr set_steering_pub_;
   rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr set_motor_level_forward_pub_;
