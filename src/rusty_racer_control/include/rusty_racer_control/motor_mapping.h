@@ -1,3 +1,17 @@
+// Copyright 2025 Rusty Racer Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /**
  * @file motor_mapping.h
  * @brief Mapping von Geschwindigkeitsbefehl zu Motor-Level
@@ -19,39 +33,39 @@
  */
 inline double speed_to_motor_level(double v_cmd, double v_max)
 {
-    // Lineare Abbildung
+  // Lineare Abbildung
   double motor_level = v_cmd / v_max;
 
-    // Begrenzung auf [0, 1]
+  // Begrenzung auf [0, 1]
   motor_level = std::max(0.0, std::min(motor_level, 1.0));
 
   return motor_level;
 
-    // Methode 2: Stückweise lineare Abbildung (falls Methode 1 ungenau ist)
-    // Benötigt experimentelle Daten für bessere Genauigkeit
-    /*
-    if (v_cmd <= 0.0) return 0.0;
+  // Methode 2: Stückweise lineare Abbildung (falls Methode 1 ungenau ist)
+  // Benötigt experimentelle Daten für bessere Genauigkeit
+  /*
+  if (v_cmd <= 0.0) return 0.0;
 
-    // Startbereich (hohe Haftreibung)
-    if (v_cmd <= 0.2) {
-        return 0.15 * (v_cmd / 0.2);
-    }
+  // Startbereich (hohe Haftreibung)
+  if (v_cmd <= 0.2) {
+      return 0.15 * (v_cmd / 0.2);
+  }
 
-    // Niedriger Geschwindigkeitsbereich
-    if (v_cmd <= 0.5) {
-        return 0.15 + 0.20 * ((v_cmd - 0.2) / 0.3);
-    }
+  // Niedriger Geschwindigkeitsbereich
+  if (v_cmd <= 0.5) {
+      return 0.15 + 0.20 * ((v_cmd - 0.2) / 0.3);
+  }
 
-    // Mittlerer Geschwindigkeitsbereich
-    if (v_cmd <= 1.0) {
-        return 0.35 + 0.30 * ((v_cmd - 0.5) / 0.5);
-    }
+  // Mittlerer Geschwindigkeitsbereich
+  if (v_cmd <= 1.0) {
+      return 0.35 + 0.30 * ((v_cmd - 0.5) / 0.5);
+  }
 
-    // Hoher Geschwindigkeitsbereich
-    if (v_cmd <= v_max) {
-        return 0.65 + 0.35 * ((v_cmd - 1.0) / (v_max - 1.0));
-    }
+  // Hoher Geschwindigkeitsbereich
+  if (v_cmd <= v_max) {
+      return 0.65 + 0.35 * ((v_cmd - 1.0) / (v_max - 1.0));
+  }
 
-    return 1.0;
-    */
+  return 1.0;
+  */
 }

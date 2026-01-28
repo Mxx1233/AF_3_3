@@ -111,3 +111,6 @@ fabric.properties
 #rusty racer logs
 my_dataset
 my_dataset/*
+log/
+rosbag*
+rosbag*/*

@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.8)
 project(rusty_racer_control)
 
+# Compiler-Optionen / Compiler Options
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+# C++17 Standard erforderlich / C++17 Standard required
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ============================================================================
 # Abhängigkeiten / Dependencies
+# ============================================================================
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -14,11 +21,17 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(rusty_racer_interfaces REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
 
+# ============================================================================
 # Include-Verzeichnisse / Include Directories
+# ============================================================================
 include_directories(include)
 
+# ============================================================================
 # Ausführbare Datei / Executable
+# ============================================================================
 add_executable(control_node src/control_node.cpp)
 ament_target_dependencies(control_node
         rclcpp
@@ -28,17 +41,16 @@ ament_target_dependencies(control_node
         tf2
         tf2_geometry_msgs
         rusty_racer_interfaces
+        sensor_msgs
+        cv_bridge
 )
 
+# ============================================================================
 # Installation
+# ============================================================================
 install(TARGETS
         control_node
         DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -51,6 +63,11 @@ install(DIRECTORY include/
 if(BUILD_TESTING)
   # Test-Abhängigkeiten finden / Find test dependencies
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_lint_auto REQUIRED)
+  find_package(ament_lint_common REQUIRED)
+
+  # Lint-Tests (optional)
+  ament_lint_auto_find_test_dependencies()
 
   # GTest Unit-Tests hinzufügen / Add GTest unit tests
   ament_add_gtest(${PROJECT_NAME}_test
@@ -67,8 +84,22 @@ if(BUILD_TESTING)
           rclcpp
           geometry_msgs
           nav_msgs
+          rusty_racer_interfaces
+  )
+
+  # Compiler-Optionen für Tests
+  target_compile_options(${PROJECT_NAME}_test PRIVATE
+          -Wall -Wextra -Wpedantic
+  )
+
+  # Testausgabe verbessern
+  set_tests_properties(${PROJECT_NAME}_test PROPERTIES
+          TIMEOUT 60
   )
 
 endif()
 
+# ============================================================================
+# Paket exportieren / Export package
+# ============================================================================
 ament_package()

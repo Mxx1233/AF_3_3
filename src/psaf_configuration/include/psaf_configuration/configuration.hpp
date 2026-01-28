@@ -22,6 +22,13 @@
 #define FORCE_TEST_PASS true
 
 /**
+* Define Node name
+*/
+#define LANE_DETECTION_OUTSIDE_NODE "lane_detection_outside"
+#define LANE_DETECTION_INSIDE_NODE "lane_detection_inside"
+#define TRAJECTORY_PLAN_NODE "trajectory_plan"
+
+/**
 * Define the uc_bridge topic names
 * Note: The PSAF 1 cars usually only have 3 ultrasonic sensors.
 */

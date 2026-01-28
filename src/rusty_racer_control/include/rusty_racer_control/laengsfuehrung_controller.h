@@ -1,3 +1,17 @@
+// Copyright 2025 Rusty Racer Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /**
  * @file laengsfuehrung_controller.h
  * @brief PI-Geschwindigkeitsregler (Geschwindigkeitsdomäne)
@@ -14,10 +28,10 @@
  */
 struct PIParams
 {
-  double Kp = 1.0;        // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
-  double Ki = 0.01;        // Integralverstärkung (empfohlen: 0.5 - 2.0)
-  double v_min = 0.0;     // Minimale Geschwindigkeit [m/s]
-  double v_max = 1.5;     // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
+  double Kp = 1.0;     // Proportionalverstärkung (empfohlen: 0.5 - 2.0)
+  double Ki = 1.5;     // Integralverstärkung (empfohlen: 0.5 - 2.0)
+  double v_min = 0.0;  // Minimale Geschwindigkeit [m/s]
+  double v_max = 1.5;  // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
 };
 
 /**
@@ -26,8 +40,8 @@ struct PIParams
  */
 struct PIState
 {
-  double v_cmd = 0.0;     // Aktueller Geschwindigkeitsbefehl [m/s]
-  double e_pre = 0.0;     // Vorheriger Geschwindigkeitsfehler [m/s]
+  double v_cmd = 0.0;  // Aktueller Geschwindigkeitsbefehl [m/s]
+  double e_pre = 0.0;  // Vorheriger Geschwindigkeitsfehler [m/s]
 };
 
 /**
@@ -58,25 +72,22 @@ inline PIState init_pi()
  *   4. Begrenzen auf [v_min, v_max]
  */
 inline double pi_step(
-  const PIParams & p,
-  PIState & s,
-  double v_ref,
-  double v_k,
+  const PIParams & p, PIState & s, double v_ref, double v_k,
   double dt)
 {
-    // Fehler berechnen
+  // Fehler berechnen
   double e_k = v_ref - v_k;
 
-    // Inkrementelles PI
+  // Inkrementelles PI
   double delta_v = p.Kp * (e_k - s.e_pre) + p.Ki * dt * e_k;
 
-    // Befehl aktualisieren
+  // Befehl aktualisieren
   s.v_cmd += delta_v;
 
-    // Begrenzung
+  // Begrenzung
   s.v_cmd = std::max(p.v_min, std::min(s.v_cmd, p.v_max));
 
-    // Zustand speichern
+  // Zustand speichern
   s.e_pre = e_k;
 
   return s.v_cmd;
@@ -92,8 +103,10 @@ inline double pi_step(
 inline const char * pi_state_string(const PIState & s, double v_ref, double v_k)
 {
   static char buffer[256];
-  snprintf(buffer, sizeof(buffer),
-             "PI-Zustand: v_cmd=%.3f m/s, e_aktuell=%.3f, e_pre=%.3f, v_soll=%.3f, v_ist=%.3f",
-             s.v_cmd, (v_ref - v_k), s.e_pre, v_ref, v_k);
+  snprintf(
+    buffer, sizeof(buffer),
+    "PI-Zustand: v_cmd=%.3f m/s, e_aktuell=%.3f, e_pre=%.3f, "
+    "v_soll=%.3f, v_ist=%.3f",
+    s.v_cmd, (v_ref - v_k), s.e_pre, v_ref, v_k);
   return buffer;
 }

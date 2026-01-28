@@ -1,21 +1,27 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schemaTypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rusty_racer_control</name>
-  <version>0.0.1</version>
-  <description>Rusty Racer Regelungsknoten</description>
+  <version>0.1.0</version>
+  <description>Rusty Racer Regelungsknoten mit PI-Längsführung und PD-Querführung</description>
   <maintainer email="your.email@tu-darmstadt.de">zx</maintainer>
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- Runtime-Abhängigkeiten / Runtime Dependencies -->
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>rusty_racer_interfaces</depend>
+  <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+
+
+  <build_depend>rusty_racer_interfaces</build_depend>
+  <exec_depend>rusty_racer_interfaces</exec_depend>
 
   <!-- Test-Abhängigkeiten / Test Dependencies -->
   <test_depend>ament_cmake_gtest</test_depend>
