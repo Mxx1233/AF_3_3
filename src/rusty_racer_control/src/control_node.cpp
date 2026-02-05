@@ -80,7 +80,7 @@ ControlNode::ControlNode()
   pi_state_ = init_pi();
 
   // Target velocity and lateral offset
-  v_ref_ = 1.8;       // Target velocity [m/s] (Original: 0.8) (best time 1.4) actually 1.8 best
+  v_ref_ = 1.4;       // Target velocity [m/s] (Original: 0.8) (best time 1.4) actually 1.8 best
   y_target_ = -0.03;  // Target lateral offset [m] -0.03
 
   // Initialize state
