@@ -21,6 +21,7 @@
 
 #pragma once
 #include <algorithm>
+#include <cmath>
 
 /**
  * @struct PIParams
@@ -32,6 +33,8 @@ struct PIParams
   double Ki = 1.5;     // Integralverstärkung (empfohlen: 0.5 - 2.0)
   double v_min = 0.0;  // Minimale Geschwindigkeit [m/s]
   double v_max = 1.5;  // Maximale Geschwindigkeit [m/s] (Messung erforderlich)
+  double a_lat_max = 1.5;  // Maximale laterale Beschleunigung [m/s^2]
+  double k_slowdown = 0.8;  // Verlangsamungsfaktor für laterale Fehler
 };
 
 /**
@@ -91,6 +94,41 @@ inline double pi_step(
   s.e_pre = e_k;
 
   return s.v_cmd;
+}
+
+/**
+ * @brief Berechnet sichere Geschwindigkeit basierend auf Krümmung und lateralem Fehler
+ * @param p Reglerparameter
+ * @param v_ref Sollgeschwindigkeit [m/s]
+ * @param curvature Straßenkrümmung [1/m]
+ * @param lateral_error Absoluter lateraler Fehler [m]
+ * @return v_safe Sichere Geschwindigkeit [m/s]
+ *
+ * Algorithmus:
+ *   1. Berechne maximale Geschwindigkeit für Kurve: v_curve = sqrt(a_lat_max / |curvature|)
+ *   2. Reduziere Geschwindigkeit bei großem lateralen Fehler: v_error = v_ref * max(0, 1 - k_slowdown * |lateral_error|)
+ *   3. Rückgabe: min(v_ref, v_curve, v_error), begrenzt auf [v_min, v_max]
+ */
+inline double compute_safe_velocity(
+  const PIParams & p, double v_ref, double curvature,
+  double lateral_error)
+{
+  // 1. Kurvengeschwindigkeit basierend auf Krümmung
+  double v_curve = v_ref;
+  if (std::abs(curvature) > 1e-6) {  // Avoid division by zero
+    v_curve = std::sqrt(p.a_lat_max / std::abs(curvature));
+  }
+
+  // 2. Verlangsamung bei lateralem Fehler (mit Schutz vor negativen Werten)
+  double v_error = v_ref * std::max(0.0, 1.0 - p.k_slowdown * lateral_error);
+
+  // 3. Minimum der drei Geschwindigkeiten
+  double v_safe = std::min({v_ref, v_curve, v_error});
+
+  // Begrenzung auf [v_min, v_max]
+  v_safe = std::max(p.v_min, std::min(v_safe, p.v_max));
+
+  return v_safe;
 }
 
 /**

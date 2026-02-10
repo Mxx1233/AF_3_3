@@ -137,6 +137,8 @@ protected:
     params.Ki = 1.5;
     params.v_min = 0.0;
     params.v_max = 1.5;
+    params.a_lat_max = 1.5;   // Maximum lateral acceleration [m/s^2]
+    params.k_slowdown = 0.8;  // Lateral error slowdown coefficient
     state = init_pi();
   }
 };
@@ -469,31 +471,31 @@ TEST_F(LateralControllerTest, MinVelocityLimit) {
 
 TEST_F(LateralControllerTest, ZeroError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta = controller.compute(0.0, 0.0, 0.0);
+  double delta = controller.compute(0.0, 0.0, 0.0, 0.0, 0.01);
   EXPECT_NEAR(delta, 0.0, EPSILON);
 }
 
 TEST_F(LateralControllerTest, PositiveLateralError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta = controller.compute(0.1, 0.0, 0.0);
+  double delta = controller.compute(0.1, 0.0, 0.0, 0.0, 0.01);
   EXPECT_LT(delta, 0.0);
 }
 
 TEST_F(LateralControllerTest, NegativeLateralError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta = controller.compute(-0.1, 0.0, 0.0);
+  double delta = controller.compute(-0.1, 0.0, 0.0, 0.0, 0.01);
   EXPECT_GT(delta, 0.0);
 }
 
 TEST_F(LateralControllerTest, PositiveHeadingError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta = controller.compute(0.0, 0.0, 0.2);
+  double delta = controller.compute(0.0, 0.0, 0.2, 0.0, 0.01);
   EXPECT_LT(delta, 0.0);
 }
 
 TEST_F(LateralControllerTest, NegativeHeadingError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta = controller.compute(0.0, 0.0, -0.2);
+  double delta = controller.compute(0.0, 0.0, -0.2, 0.0, 0.01);
   EXPECT_GT(delta, 0.0);
 }
 
@@ -501,16 +503,16 @@ TEST_F(LateralControllerTest, SteeringAngleLimit) {
   LateralController controller(v_init, L, L_h, kp, kd);
   double max_steering = M_PI / 6.0;
 
-  double delta = controller.compute(1.0, 0.0, 1.0);
+  double delta = controller.compute(1.0, 0.0, 1.0, 0.0, 0.01);
   EXPECT_GE(delta, -max_steering);
   EXPECT_LE(delta, max_steering);
 }
 
 TEST_F(LateralControllerTest, CombinedError) {
   LateralController controller(v_init, L, L_h, kp, kd);
-  double delta1 = controller.compute(0.1, 0.0, 0.0);
-  double delta2 = controller.compute(0.0, 0.0, 0.1);
-  double delta3 = controller.compute(0.1, 0.0, 0.1);
+  double delta1 = controller.compute(0.1, 0.0, 0.0, 0.0, 0.01);
+  double delta2 = controller.compute(0.0, 0.0, 0.1, 0.0, 0.01);
+  double delta3 = controller.compute(0.1, 0.0, 0.1, 0.0, 0.01);
 
   EXPECT_LT(delta3, delta1);
   EXPECT_LT(delta3, delta2);
@@ -520,13 +522,13 @@ TEST_F(LateralControllerTest, NonZeroTarget) {
   LateralController controller(v_init, L, L_h, kp, kd);
   double y_target = 0.06;
 
-  double delta1 = controller.compute(0.06, y_target, 0.0);
+  double delta1 = controller.compute(0.06, y_target, 0.0, 0.0, 0.01);
   EXPECT_NEAR(delta1, 0.0, EPSILON);
 
-  double delta2 = controller.compute(0.07, y_target, 0.0);
+  double delta2 = controller.compute(0.07, y_target, 0.0, 0.0, 0.01);
   EXPECT_LT(delta2, 0.0);
 
-  double delta3 = controller.compute(0.05, y_target, 0.0);
+  double delta3 = controller.compute(0.05, y_target, 0.0, 0.0, 0.01);
   EXPECT_GT(delta3, 0.0);
 }
 
@@ -534,7 +536,7 @@ TEST_F(LateralControllerTest, NegativeTarget) {
   LateralController controller(v_init, L, L_h, kp, kd);
   double y_target = -0.06;
 
-  double delta = controller.compute(-0.06, y_target, 0.0);
+  double delta = controller.compute(-0.06, y_target, 0.0, 0.0, 0.01);
   EXPECT_NEAR(delta, 0.0, EPSILON);
 }
 
@@ -545,10 +547,10 @@ TEST_F(LateralControllerTest, PDControllerEffect) {
   LateralController controller(v_init, L, L_h, kp, kd_test);
 
   // Mit D-Anteil sollte Reaktion auf Heading-Fehler stärker sein
-  double delta_no_d = controller.compute(0.0, 0.0, 0.1);
+  double delta_no_d = controller.compute(0.0, 0.0, 0.1, 0.0, 0.01);
 
   LateralController controller2(v_init, L, L_h, kp, 2.0);
-  double delta_high_d = controller2.compute(0.0, 0.0, 0.1);
+  double delta_high_d = controller2.compute(0.0, 0.0, 0.1, 0.0, 0.01);
 
   EXPECT_LT(
     delta_high_d,
@@ -559,8 +561,8 @@ TEST_F(LateralControllerTest, SymmetricResponse) {
   // Test: Symmetrische Reaktion
   LateralController controller(v_init, L, L_h, kp, kd);
 
-  double delta_pos = controller.compute(0.05, 0.0, 0.0);
-  double delta_neg = controller.compute(-0.05, 0.0, 0.0);
+  double delta_pos = controller.compute(0.05, 0.0, 0.0, 0.0, 0.01);
+  double delta_neg = controller.compute(-0.05, 0.0, 0.0, 0.0, 0.01);
 
   EXPECT_NEAR(delta_pos, -delta_neg, EPSILON_RELAXED);
 }
@@ -570,11 +572,11 @@ TEST_F(LateralControllerTest, LargeTargetOffset) {
   LateralController controller(v_init, L, L_h, kp, kd);
   double y_target = 0.1;
 
-  double delta = controller.compute(0.1, y_target, 0.0);
+  double delta = controller.compute(0.1, y_target, 0.0, 0.0, 0.01);
   EXPECT_NEAR(delta, 0.0, EPSILON);
 
   // Weiche davon ab
-  double delta2 = controller.compute(0.15, y_target, 0.0);
+  double delta2 = controller.compute(0.15, y_target, 0.0, 0.0, 0.01);
   EXPECT_LT(delta2, 0.0);
 }
 
@@ -583,7 +585,7 @@ TEST_F(LateralControllerTest, ArctanSaturation) {
   LateralController controller(v_init, L, L_h, kp, kd);
 
   // Sehr großer Fehler
-  double delta = controller.compute(10.0, 0.0, 0.0);
+  double delta = controller.compute(10.0, 0.0, 0.0, 0.0, 0.01);
 
   // arctan(x) < π/2 für alle x
   EXPECT_LT(std::abs(delta), M_PI / 2.0);
@@ -598,8 +600,209 @@ TEST_F(LateralControllerTest, ZeroVelocityHandling) {
   EXPECT_GE(controller.getVelocity(), 0.1);
 }
 
+// NEU: Test für Curvature Feedforward
+TEST_F(LateralControllerTest, CurvatureFeedforward) {
+  // Test: Krümmungs-Feedforward sollte Lenkwinkel bei Kurven erzeugen
+  LateralController controller(v_init, L, L_h, kp, kd);
+
+  // Keine Abweichung, nur Krümmung
+  double y = 0.0;
+  double y_target = 0.0;
+  double phi_k = 0.0;
+  double curvature = 0.5;  // Kurve mit Radius = 2m
+  double dt = 0.01;
+
+  double delta = controller.compute(y, y_target, phi_k, curvature, dt);
+
+  // Sollte einen Lenkwinkel erzeugen, auch ohne Fehler
+  EXPECT_NE(delta, 0.0);
+
+  // Für positive Krümmung (Rechtskurve), erwarten wir positiven Lenkwinkel
+  EXPECT_GT(delta, 0.0);
+
+  // Sollte ungefähr arctan(curvature * L) sein
+  double expected_steering = std::atan(curvature * L);
+  EXPECT_NEAR(delta, expected_steering, 0.1);
+}
+
+TEST_F(LateralControllerTest, NegativeCurvatureFeedforward) {
+  // Test: Negative Krümmung (Linkskurve)
+  LateralController controller(v_init, L, L_h, kp, kd);
+
+  double y = 0.0;
+  double y_target = 0.0;
+  double phi_k = 0.0;
+  double curvature = -0.5;  // Linkskurve
+  double dt = 0.01;
+
+  double delta = controller.compute(y, y_target, phi_k, curvature, dt);
+
+  // Für negative Krümmung (Linkskurve), erwarten wir negativen Lenkwinkel
+  EXPECT_LT(delta, 0.0);
+
+  double expected_steering = std::atan(curvature * L);
+  EXPECT_NEAR(delta, expected_steering, 0.1);
+}
+
+TEST_F(LateralControllerTest, CurvaturePlusError) {
+  // Test: Kombination aus Krümmung und Fehler
+  LateralController controller(v_init, L, L_h, kp, kd);
+
+  double y = 0.05;  // 50mm nach rechts abgewichen
+  double y_target = 0.0;
+  double phi_k = 0.0;
+  double curvature = 0.3;  // Rechtskurve
+  double dt = 0.01;
+
+  // Mit Krümmung
+  double delta_with_curve = controller.compute(y, y_target, phi_k, curvature, dt);
+
+  // Create new controller for comparison
+  LateralController controller2(v_init, L, L_h, kp, kd);
+
+  // Ohne Krümmung
+  double delta_no_curve = controller2.compute(y, y_target, phi_k, 0.0, dt);
+
+  // Mit Krümmung: Feedforward addiert positiven Wert, macht delta weniger negativ
+  // delta_with_curve > delta_no_curve (z.B. -0.097 > -0.173)
+  EXPECT_GT(delta_with_curve, delta_no_curve);
+
+  // Alternativ: Beide sollten unterschiedlich sein und feedforward sollte Einfluss haben
+  EXPECT_NE(delta_with_curve, delta_no_curve);
+  EXPECT_NEAR(std::abs(delta_with_curve - delta_no_curve), curvature * L, 0.2);
+}
+
 // ============================================================================
-// Test-Gruppe 5: Integration Tests (5 neue Tests)
+// Test-Gruppe 5: Longitudinal Safe Velocity Tests (Neue Gruppe)
+// ============================================================================
+
+class SafeVelocityTest : public ::testing::Test
+{
+protected:
+  PIParams params;
+
+  void SetUp() override
+  {
+    params.Kp = 1.0;
+    params.Ki = 1.5;
+    params.v_min = 0.0;
+    params.v_max = 1.5;
+    params.a_lat_max = 1.5;   // Maximum lateral acceleration [m/s^2]
+    params.k_slowdown = 0.8;  // Lateral error slowdown coefficient
+  }
+};
+
+TEST_F(SafeVelocityTest, StraightRoadFullSpeed) {
+  // Test: Gerade Strecke ohne Fehler → volle Geschwindigkeit
+  double v_ref = 1.0;
+  double curvature = 0.0;
+  double lateral_error = 0.0;
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  EXPECT_NEAR(v_safe, v_ref, EPSILON);
+}
+
+TEST_F(SafeVelocityTest, SharpCurveSlowdown) {
+  // Test: Scharfe Kurve → Geschwindigkeit reduzieren
+  double v_ref = 1.0;
+  double curvature = 4.0;  // Radius = 0.25m (sehr scharfe Kurve)
+  double lateral_error = 0.0;
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  // v_curve = sqrt(a_lat_max / |curvature|) = sqrt(1.5 / 4.0) ≈ 0.61
+  // Sollte deutlich kleiner als v_ref sein
+  EXPECT_LT(v_safe, v_ref);
+
+  // Sollte ungefähr sqrt(1.5/4.0) ≈ 0.61 sein
+  double expected_v = std::sqrt(params.a_lat_max / std::abs(curvature));
+  EXPECT_NEAR(v_safe, expected_v, 0.1);
+}
+
+TEST_F(SafeVelocityTest, LargeLateralErrorSlowdown) {
+  // Test: Großer lateraler Fehler → Geschwindigkeit reduzieren
+  double v_ref = 1.0;
+  double curvature = 0.0;
+  double lateral_error = 0.1;  // 100mm Fehler
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  // v_error = v_ref * (1 - k_slowdown * lateral_error)
+  //         = 1.0 * (1 - 0.8 * 0.1) = 0.92
+  double expected_v = v_ref * (1.0 - params.k_slowdown * lateral_error);
+  EXPECT_NEAR(v_safe, expected_v, EPSILON);
+  EXPECT_LT(v_safe, v_ref);
+}
+
+TEST_F(SafeVelocityTest, CombinedCurveAndError) {
+  // Test: Kurve + lateraler Fehler → doppelte Reduktion
+  double v_ref = 1.0;
+  double curvature = 0.5;       // Mittlere Kurve
+  double lateral_error = 0.05;  // 50mm Fehler
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  // Sollte durch beide Faktoren reduziert werden
+  double v_curve = std::sqrt(params.a_lat_max / std::abs(curvature));
+  double v_error = v_ref * (1.0 - params.k_slowdown * lateral_error);
+
+  // v_safe sollte das Minimum sein
+  double expected_v = std::min({v_ref, v_curve, v_error});
+  EXPECT_NEAR(v_safe, expected_v, EPSILON_RELAXED);
+  EXPECT_LT(v_safe, v_ref);
+}
+
+TEST_F(SafeVelocityTest, MinVelocityBound) {
+  // Test: Sollte nie unter v_min fallen
+  double v_ref = 1.0;
+  double curvature = 10.0;      // Extrem scharfe Kurve
+  double lateral_error = 10.0;  // Extrem großer Fehler
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  EXPECT_GE(v_safe, params.v_min);
+}
+
+TEST_F(SafeVelocityTest, MaxVelocityBound) {
+  // Test: Sollte nie über v_max steigen
+  double v_ref = 10.0;  // Unrealistisch hoher Sollwert
+  double curvature = 0.0;
+  double lateral_error = 0.0;
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  EXPECT_LE(v_safe, params.v_max);
+}
+
+TEST_F(SafeVelocityTest, NegativeCurvature) {
+  // Test: Negative Krümmung (Linkskurve) sollte gleich behandelt werden
+  double v_ref = 1.0;
+  double curvature_pos = 0.5;
+  double curvature_neg = -0.5;
+  double lateral_error = 0.0;
+
+  double v_safe_pos = compute_safe_velocity(params, v_ref, curvature_pos, lateral_error);
+  double v_safe_neg = compute_safe_velocity(params, v_ref, curvature_neg, lateral_error);
+
+  // Sollte symmetrisch sein (abs(curvature) wird verwendet)
+  EXPECT_NEAR(v_safe_pos, v_safe_neg, EPSILON);
+}
+
+TEST_F(SafeVelocityTest, ZeroCurvatureDivisionSafe) {
+  // Test: Division durch Null sollte vermieden werden
+  double v_ref = 1.0;
+  double curvature = 0.0;
+  double lateral_error = 0.0;
+
+  double v_safe = compute_safe_velocity(params, v_ref, curvature, lateral_error);
+
+  // Sollte v_ref zurückgeben (keine Kurve)
+  EXPECT_NEAR(v_safe, v_ref, EPSILON);
+}
+
+// ============================================================================
+// Test-Gruppe 6: Integration Tests (5 neue Tests)
 // ============================================================================
 
 class IntegrationTest : public ::testing::Test
@@ -620,6 +823,8 @@ protected:
     pi_params.Ki = 1.5;
     pi_params.v_min = 0.0;
     pi_params.v_max = v_max;
+    pi_params.a_lat_max = 1.5;   // Maximum lateral acceleration [m/s^2]
+    pi_params.k_slowdown = 0.8;  // Lateral error slowdown coefficient
     pi_state = init_pi();
   }
 };
@@ -632,6 +837,7 @@ TEST_F(IntegrationTest, CompleteControlLoop) {
   double y = 0.05;  // 50mm Querabweichung
   double y_target = 0.0;
   double phi_k = 0.1;  // 0.1 rad Kursabweichung
+  double curvature = 0.0;  // Straight road
   double v_ref = 0.8;
   double dt = 0.02;
   double tau = 0.1;
@@ -642,7 +848,7 @@ TEST_F(IntegrationTest, CompleteControlLoop) {
     double motor_level = speed_to_motor_level(v_cmd, v_max);
 
     // Lateralregelung
-    double delta = lat_controller.compute(y, y_target, phi_k);
+    double delta = lat_controller.compute(y, y_target, phi_k, curvature, dt);
 
     // Simuliere Fahrzeugdynamik (vereinfacht)
     v_actual += (v_cmd - v_actual) / tau * dt;
@@ -665,16 +871,18 @@ TEST_F(IntegrationTest, LaneChangeScenario) {
   double y = 0.0;
   double y_target_initial = 0.0;
   double y_target_final = 0.1;  // Spurwechsel zu 100mm
+  double curvature = 0.0;
+  double dt = 0.02;
 
   // Phase 1: Stabil auf Mittellinie
   for (int i = 0; i < 20; i++) {
-    double delta = lat_controller.compute(y, y_target_initial, 0.0);
+    double delta = lat_controller.compute(y, y_target_initial, 0.0, curvature, dt);
     EXPECT_NEAR(delta, 0.0, EPSILON_RELAXED);
   }
 
   // Phase 2: Spurwechsel initiiert
   for (int i = 0; i < 50; i++) {
-    double delta = lat_controller.compute(y, y_target_final, 0.0);
+    double delta = lat_controller.compute(y, y_target_final, 0.0, curvature, dt);
     // Sollte nach rechts lenken
     EXPECT_GT(delta, 0.0);
 
@@ -693,10 +901,12 @@ TEST_F(IntegrationTest, CurveNegotiation) {
   double y = 0.0;
   double y_target = 0.0;
   double phi_k = 0.2;  // Konstante Kurve
+  double curvature = 0.0;
+  double dt = 0.02;
 
   std::vector<double> deltas;
   for (int i = 0; i < 50; i++) {
-    double delta = lat_controller.compute(y, y_target, phi_k);
+    double delta = lat_controller.compute(y, y_target, phi_k, curvature, dt);
     deltas.push_back(delta);
   }
 
@@ -737,13 +947,15 @@ TEST_F(IntegrationTest, DisturbanceRejection) {
   double y = 0.0;
   double y_target = 0.0;
   double phi_k = 0.0;
+  double curvature = 0.0;
+  double dt = 0.02;
 
   // Simuliere Windböe (plötzliche Querabweichung)
   y = 0.08;  // 80mm Versatz
 
   std::vector<double> y_trajectory;
   for (int i = 0; i < 100; i++) {
-    double delta = lat_controller.compute(y, y_target, phi_k);
+    double delta = lat_controller.compute(y, y_target, phi_k, curvature, dt);
 
     // Vereinfachte Fahrzeugreaktion
     y -= delta * 0.05;

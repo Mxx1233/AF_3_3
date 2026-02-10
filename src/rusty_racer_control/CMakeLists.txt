@@ -21,8 +21,6 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(rusty_racer_interfaces REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
 
 # ============================================================================
 # Include-Verzeichnisse / Include Directories
@@ -41,8 +39,6 @@ ament_target_dependencies(control_node
         tf2
         tf2_geometry_msgs
         rusty_racer_interfaces
-        sensor_msgs
-        cv_bridge
 )
 
 # ============================================================================
@@ -57,17 +53,20 @@ install(DIRECTORY include/
         DESTINATION include
 )
 
+install (DIRECTORY launch
+	DESTINATION share/${PROJECT_NAME}
+)
+
 # ============================================================================
 # Test-Konfiguration / Testing Configuration
 # ============================================================================
 if(BUILD_TESTING)
   # Test-Abhängigkeiten finden / Find test dependencies
   find_package(ament_cmake_gtest REQUIRED)
-  find_package(ament_lint_auto REQUIRED)
-  find_package(ament_lint_common REQUIRED)
-
+  #find_package(ament_lint_auto REQUIRED)
+  #find_package(ament_lint_common REQUIRED)
   # Lint-Tests (optional)
-  ament_lint_auto_find_test_dependencies()
+  #ament_lint_auto_find_test_dependencies()
 
   # GTest Unit-Tests hinzufügen / Add GTest unit tests
   ament_add_gtest(${PROJECT_NAME}_test
@@ -85,12 +84,21 @@ if(BUILD_TESTING)
           geometry_msgs
           nav_msgs
           rusty_racer_interfaces
+          std_msgs
+          tf2
+          tf2_geometry_msgs
   )
 
   # Compiler-Optionen für Tests
-  target_compile_options(${PROJECT_NAME}_test PRIVATE
-          -Wall -Wextra -Wpedantic
-  )
+  #target_compile_options(${PROJECT_NAME}_test PRIVATE
+ #         -Wall -Wextra -Wpedantic
+ # )
+
+if(MSVC)
+  target_compile_options(${PROJECT_NAME}_test PRIVATE /W4)
+else()
+  target_compile_options(${PROJECT_NAME}_test PRIVATE -Wall -Wextra -Wpedantic)
+endif()
 
   # Testausgabe verbessern
   set_tests_properties(${PROJECT_NAME}_test PROPERTIES

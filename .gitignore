@@ -1,4 +1,5 @@
 build/*
+.venv/*
 install/*
 log/*
 lcov/*

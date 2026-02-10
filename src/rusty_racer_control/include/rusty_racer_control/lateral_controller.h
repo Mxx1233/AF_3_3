@@ -14,21 +14,28 @@
 
 /**
  * @file lateral_controller.h
- * @brief Lateraler PD-Regler mit Vorfilter
+ * @brief Lateraler PD-Regler mit Curvature Feedforward
  * @author zx
- * @date 2025-12
+ * @date 2025-01
  */
 
 #pragma once
 #include <algorithm>
 #include <cmath>
-
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 /**
  * @class LateralController
  * @brief Lateraler Regler für Spurführung
  *
- * Regelgesetz: φL* = -kp·e_y - (kp+kd)·φK, wobei e_y = y - y_target
- * Vorfilter: δ = arctan(φL*)
+ * Regelgesetz (tan-Domäne):
+ * φ*L_feedback = -kp·e_y - (kp+kd)·φK
+ * φ*L_feedforward = κ·l  [Dokumentformel 3.4]
+ * φ*L = φ*L_feedback + φ*L_feedforward
+ * 
+ * Vorfilter (Umrechnung in Winkel-Domäne):
+ * δ = arctan(φ*L)
  */
 class LateralController {
 public:
@@ -43,7 +50,7 @@ public:
   LateralController(double v, double l, double l_h, double kp, double kd)
     : v_(v), l_(l), l_h_(l_h), kp_(kp), kd_(kd) {
     if (v_ < 0.1) {
-      v_ = 0.1;               // Mindestgeschwindigkeit
+      v_ = 0.1;  // Mindestgeschwindigkeit
     }
   }
 
@@ -56,27 +63,35 @@ public:
   /**
    * @brief Berechnet Lenkwinkel aus Querabweichung und Kurswinkel
    * @param y Aktuelle Querabweichung [m]
-   * @param y_target Ziel-Querabweichung [m] (维持的目标横向位置)
+   * @param y_target Ziel-Querabweichung [m]
    * @param phi_k Kursabweichung [rad]
+   * @param curvature Straßenkrümmung [1/m]
+   * @param dt Zeitschritt [s] - unused for PD controller
    * @return delta Lenkwinkel [rad]
    */
-  double compute(double y, double y_target, double phi_k)
+  double compute(double y, double y_target, double phi_k, double curvature, double dt)
   {
+    (void)dt;  // Unused parameter for PD controller
+
     // Lateraler Fehler berechnen
     double e_y = y - y_target;
 
-    // PD-Regelung
-    double p_term = -kp_ * e_y - kp_ * phi_k;
-    double d_term = -kd_ * phi_k;
-    double steering_input = p_term + d_term;
+    // Regler in tan-Domäne (linearisierter Bereich)
+    // Feedback: φ*L_feedback = -kp·e_y - (kp+kd)·φK
+    double phi_L_star_feedback = -kp_ * e_y - (kp_ + kd_) * phi_k;
 
-    // Begrenzung auf ±30°
-    const double max_steering = M_PI / 6.0;
-    steering_input =
-      std::max(-max_steering, std::min(steering_input, max_steering));
+    // Feedforward: φ*L_feedforward = κ·l  [Formel 3.4: κ·l = tan(φL)]
+    double phi_L_star_feedforward = curvature * l_;
 
-    // Arctan-Vorfilter
-    double steering_angle = std::atan(steering_input);
+    // Gesamte Stellgröße in tan-Domäne
+    double phi_L_star = phi_L_star_feedback + phi_L_star_feedforward;
+
+    // Begrenzung in tan-Domäne (±30° → tan(±30°) ≈ ±0.577)
+    const double max_phi_L_star = std::tan(M_PI / 6.0);
+    phi_L_star = std::clamp(phi_L_star, -max_phi_L_star, max_phi_L_star);
+
+    // Arctan-Vorfilter: φL = arctan(φ*L)
+    double steering_angle = std::atan(phi_L_star);
 
     return steering_angle;
   }

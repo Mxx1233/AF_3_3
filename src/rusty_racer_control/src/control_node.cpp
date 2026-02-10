@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,36 +19,41 @@
  * @date 2025-12
  */
 
-// 1. Associated Header
+// 1. Zugehöriger Header dieser Datei (muss an erster Stelle stehen)
 #include "rusty_racer_control/control_node.h"
 
-// 2. C++ System Libraries
+// 2. C++ System-Bibliotheken
 #include <cmath>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
 
-// 3. ROS 2 / Third-party Libraries
+// 3. ROS 2 / Drittanbieter-Bibliotheken
 #include <nav_msgs/msg/odometry.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2/LinearMath/Matrix3x3.h>    // NOLINT(build/include_order)
+#include <tf2/LinearMath/Quaternion.h>   // NOLINT(build/include_order)
+#include <tf2/utils.h>                   // NOLINT(build/include_order)
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-// --- TF2 Includes (Order is important for linking!) ---
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> 
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/utils.h>
-// -----------------------------------------------------
-
-#include <sensor_msgs/image_encodings.hpp>
-
-// 4. Project Headers
+// 4. Andere Header dieses Projekts
+// Interne Header des Control-Pakets
 #include "rusty_racer_control/common.h"
 #include "rusty_racer_control/laengsfuehrung_controller.h"
 #include "rusty_racer_control/lateral_controller.h"
 #include "rusty_racer_control/motor_mapping.h"
+// Schnittstellen-Header (Interfaces)
 #include "rusty_racer_interfaces/msg/lane_deviation.hpp"
 #include "rusty_racer_interfaces/msg/motor_command.hpp"
+#include "geometry_msgs/msg/quaternion.hpp"
+static double yaw_from_quat(const geometry_msgs::msg::Quaternion &q)
+{
+  // yaw (Z axis rotation) from quaternion (x,y,z,w)
+  const double siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
+  const double cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+  return std::atan2(siny_cosp, cosy_cosp);
+}
 
 /**
  * @class ControlNode
@@ -58,13 +63,13 @@ ControlNode::ControlNode()
 : Node("control_node")
 {
   // Vehicle parameters
-  const double v_init = 0.01;
+  const double v_init = 0.5;
   const double l = 0.257;  // Wheelbase [m]
   const double l_h = 0.0;  // Sensor offset [m]
 
-  // Lateral controller parameters (reduced for low-speed gentle steering)
-  const double lat_kp = 0.75;  // Original: 0.7
-  const double lat_kd = 0.08;  // Original: 0.08
+  // Lateral controller parameters
+  const double lat_kp = 0.8;
+  const double lat_kd = 0.2;
 
   // Initialize controllers
   lateral_controller_ =
@@ -72,52 +77,67 @@ ControlNode::ControlNode()
 
   // Longitudinal PI controller parameters
   PIParams pi_params;
-  pi_params.Kp = 1.1;    // Original: 1.1
-  pi_params.Ki = 0.015;  // Original: 0.015
+  pi_params.Kp = 1.0;
+  pi_params.Ki = 0.01;
   pi_params.v_min = 0.0;
-  pi_params.v_max = 2.0; // Original: 2.0
+  pi_params.v_max = 2.9;
+  pi_params.a_lat_max = 1.5;   // Maximum lateral acceleration [m/s^2]
+  pi_params.k_slowdown = 0.8;  // Lateral error slowdown coefficient
 
   pi_state_ = init_pi();
+  pi_params_ = pi_params;
 
   // Target velocity and lateral offset
-  v_ref_ = 1.4;       // Target velocity [m/s] (Original: 0.8) (best time 1.4) actually 1.8 best
-  y_target_ = -0.03;  // Target lateral offset [m] -0.03
+  v_ref_ = 0.8;     // Target velocity [m/s]
+  y_target_ = -0.06;  // Target lateral offset [m]
+                      // 0.0  = track center line
+                      // 0.06 = maintain 60mm right offset
+                      // -0.06 = maintain 60mm left offset
 
   // Initialize state
   current_v_ = 0.0;
   current_psi_k_ = 0.0;
   last_update_time_ = this->now();
 
-  // 1. Subscriber for odometry
+  // Subscriber for odometry
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "/odom", 10,
     std::bind(&ControlNode::odomCallback, this, std::placeholders::_1));
 
-  // 2. Subscriber for lane deviation
+  // Subscriber for lane deviation
   lane_sub_ =
     this->create_subscription<rusty_racer_interfaces::msg::LaneDeviation>(
     "/lane_deviation", 10,
     std::bind(&ControlNode::laneCallback, this, std::placeholders::_1));
 
-  // 3. Subscriber for Camera (Visualization)
-  // Matching the topic from TrajectoryNode
-  sub_image_ = this->create_subscription<sensor_msgs::msg::Image>(
-    "/camera/camera/color/image_raw", 10,
-    std::bind(&ControlNode::imageCallback, this, std::placeholders::_1));
-
-  // 4. Publisher for motor commands
+  // Publisher for motor commands
   motor_cmd_pub_ =
     this->create_publisher<rusty_racer_interfaces::msg::MotorCommand>(
     "/motor_command", 10);
 
-  // 5. Publisher for Debug Overlay
-  pub_debug_ = this->create_publisher<sensor_msgs::msg::Image>(
-    "control/debug_overlay", 10);
-
   // Startup logging
   RCLCPP_INFO(this->get_logger(), "=================================");
-  RCLCPP_INFO(this->get_logger(), "Control Node Started");
-  RCLCPP_INFO(this->get_logger(), "Visualization Topic: control/debug_overlay");
+  RCLCPP_INFO(this->get_logger(), "Control Node gestartet");
+  RCLCPP_INFO(this->get_logger(), "=================================");
+  RCLCPP_INFO(this->get_logger(), "Lateral: PD + Curvature Feedforward + y_target");
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Longitudinal: PI-Geschwindigkeitsregelung + Safe Velocity Planning");
+  RCLCPP_INFO(this->get_logger(), "=================================");
+  RCLCPP_INFO(this->get_logger(), "Lateral Parameter:");
+  RCLCPP_INFO(this->get_logger(), "  Kp = %.2f", lat_kp);
+  RCLCPP_INFO(this->get_logger(), "  Kd = %.2f", lat_kd);
+  RCLCPP_INFO(this->get_logger(), "  y_target = %.3f m", y_target_);
+  RCLCPP_INFO(this->get_logger(), "=================================");
+  RCLCPP_INFO(this->get_logger(), "PI-Parameter:");
+  RCLCPP_INFO(this->get_logger(), "  Kp = %.2f", pi_params.Kp);
+  RCLCPP_INFO(this->get_logger(), "  Ki = %.2f", pi_params.Ki);
+  RCLCPP_INFO(this->get_logger(), "  v_min = %.2f m/s", pi_params.v_min);
+  RCLCPP_INFO(this->get_logger(), "  v_max = %.2f m/s", pi_params.v_max);
+  RCLCPP_INFO(this->get_logger(), "  a_lat_max = %.2f m/s^2", pi_params.a_lat_max);
+  RCLCPP_INFO(this->get_logger(), "  k_slowdown = %.2f", pi_params.k_slowdown);
+  RCLCPP_INFO(this->get_logger(), "=================================");
+  RCLCPP_INFO(this->get_logger(), "Sollgeschwindigkeit: %.2f m/s", v_ref_);
   RCLCPP_INFO(this->get_logger(), "=================================");
 }
 
@@ -127,33 +147,10 @@ ControlNode::ControlNode()
 void ControlNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   current_v_ = msg->twist.twist.linear.x;
-
-  // --- FIX: Explicit conversion to avoid linker error ---
-  tf2::Quaternion q;
-  tf2::fromMsg(msg->pose.pose.orientation, q);
-  
-  // Convert quaternion to yaw (safe method)
-  double roll, pitch, yaw;
-  tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
-  current_psi_k_ = yaw;
-  // ----------------------------------------------------
-
+  //current_psi_k_ = tf2::getYaw(msg->pose.pose.orientation);
+  current_psi_k_ = yaw_from_quat(msg->pose.pose.orientation);
   lateral_controller_->updateVelocity(current_v_);
-  last_update_time_ = this->now();
-}
-
-/**
- * @brief Image callback - buffers the image for the main loop
- */
-void ControlNode::imageCallback(const sensor_msgs::msg::Image::SharedPtr msg)
-{
-  try {
-    // Store image for processing in the control loop
-    // Using toCvCopy ensures we have a mutable copy
-    current_image_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
-  } catch (cv_bridge::Exception& e) {
-    RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
-  }
+  // Note: last_update_time_ is now only updated in laneCallback for consistent dt calculation
 }
 
 /**
@@ -165,81 +162,34 @@ void ControlNode::laneCallback(
   // Extract data from LaneDeviation message
   double y = msg->lateral_error;
   double phi_k = msg->heading_error;
+  double curvature = msg->curvature;  // Curvature for feedforward control
 
-  // Calculate time step
+  // Calculate time step (using laneCallback timing for stable dt)
   auto current_time = this->now();
   double dt = (current_time - last_update_time_).seconds();
   if (dt <= 0.0 || dt > 0.1) {
     dt = 0.02;  // Default 50Hz if invalid
   }
 
+  // Compute safe velocity based on curvature and lateral error
+  double v_safe = compute_safe_velocity(pi_params_, v_ref_, curvature, std::abs(y));
+
   // Longitudinal control: PI controller + mapping
-  double v_cmd = pi_step(pi_params_, pi_state_, v_ref_, current_v_, dt);
+  double v_cmd = pi_step(pi_params_, pi_state_, v_safe, current_v_, dt);
   double motor_level = speed_to_motor_level(v_cmd, pi_params_.v_max);
 
-  // Lateral control: PD controller with y_target
-  double delta = lateral_controller_->compute(y, y_target_, phi_k);
+  // Lateral control: PD controller with curvature feedforward
+  double delta = lateral_controller_->compute(y, y_target_, phi_k, curvature, dt);
 
-  // --- Visualization Logic ---
-  if (!current_image_.empty()) {
-    cv::Mat debug_view = current_image_.clone();
-    
-    // Draw the steering overlay
-    drawControlOverlay(debug_view, delta, v_cmd);
-
-    // Convert back to ROS message and publish
-    sensor_msgs::msg::Image::SharedPtr out_msg = 
-      cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", debug_view).toImageMsg();
-    
-    out_msg->header.stamp = this->now();
-    out_msg->header.frame_id = "camera_link"; // Adjust if needed
-    pub_debug_->publish(*out_msg);
-  }
-
-  // Create motor command message
+  // Create motor command message with timestamp
   auto cmd = rusty_racer_interfaces::msg::MotorCommand();
-  cmd.header = msg->header;
+  cmd.header = msg->header;  // Timestamp from lane deviation message
   cmd.motor_level = motor_level;
-  cmd.steering_angle = -delta;  // Direct pass-through (coordinate system already corrected in trajectory)
+  cmd.steering_angle = delta;
   motor_cmd_pub_->publish(cmd);
-}
 
-/**
- * @brief Helper to draw steering arrow and text
- */
-void ControlNode::drawControlOverlay(cv::Mat& img, double steering_angle, double velocity)
-{
-  int h = img.rows;
-  int w = img.cols;
-  cv::Point center_bottom(w / 2, h);
-
-  // 1. Draw Steering Arrow
-  // Length relative to image height
-  double arrow_len = h * 0.35; 
-  
-  // Calculate tip position
-  // delta > 0 is Left Turn. In Image X grows right, so Left is -X.
-  // We use sin/cos logic:
-  // x = start_x - len * sin(angle)
-  // y = start_y - len * cos(angle)
-  cv::Point arrow_tip;
-  arrow_tip.x = center_bottom.x - static_cast<int>(arrow_len * std::sin(steering_angle));
-  arrow_tip.y = center_bottom.y - static_cast<int>(arrow_len * std::cos(steering_angle));
-
-  // Cyan Color (BGR: 255, 255, 0)
-  cv::Scalar color(255, 255, 0); 
-  cv::arrowedLine(img, center_bottom, arrow_tip, color, 5, 8, 0, 0.1);
-
-  // 2. Draw Text Info with background box
-  std::string txt_steer = "Steer: " + std::to_string(steering_angle);
-  std::string txt_vel   = "Vel Ref: " + std::to_string(velocity);
-  
-  // Background box (Top Left)
-  cv::rectangle(img, cv::Point(0, 0), cv::Point(250, 80), cv::Scalar(0,0,0), -1);
-  
-  // Text
-  cv::putText(img, txt_steer, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
-  cv::putText(img, txt_vel,   cv::Point(10, 65), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
+  // Update timestamp for next iteration
+  last_update_time_ = current_time;
 }
 
 /**
