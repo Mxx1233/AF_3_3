@@ -61,7 +61,8 @@ realsense2_camera_node:
     base_frame_id: camera_link
     odom_frame_id: odom
 
-    align_depth: false
+    # [CHANGE] set config to true to get aligned depth image!
+    align_depth: true
     # aligned_depth_to_color_frame_id: camera_aligned_depth_to_color_frame
     # aligned_depth_to_infra_frame_id: camera_aligned_depth_to_infra_frame
     # aligned_depth_to_infra1_frame_id: camera_aligned_depth_to_infra1_frame

@@ -35,12 +35,17 @@ __control = IncludeLaunchDescription(PythonLaunchDescriptionSource(
                  'control.launch.py')
 ))
 
+__detect_traffic_sign = IncludeLaunchDescription(PythonLaunchDescriptionSource(
+    os.path.join(get_package_share_directory('traffic_sign_yolo'), 'launch',
+                 'detect_traffic_sign_node.launch.py')
+))
+
 
 def generate_launch_description():
 
     record_arg = DeclareLaunchArgument(
         'record',
-        default_value='true',
+        default_value='false',
         description='Set to "true" to enable data recording, "false" to disable.')
 
     recorder_node = Node(
@@ -61,6 +66,7 @@ def generate_launch_description():
         __state_estimation,
         __uc_bridge_adapter,
         __control,
+        __detect_traffic_sign,
 
         LogInfo(msg=['Starting Data Recorder (Conditional)']),
         recorder_node
