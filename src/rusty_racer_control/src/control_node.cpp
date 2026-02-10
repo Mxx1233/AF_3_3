@@ -46,14 +46,8 @@
 // Schnittstellen-Header (Interfaces)
 #include "rusty_racer_interfaces/msg/lane_deviation.hpp"
 #include "rusty_racer_interfaces/msg/motor_command.hpp"
-#include "geometry_msgs/msg/quaternion.hpp"
-static double yaw_from_quat(const geometry_msgs::msg::Quaternion &q)
-{
-  // yaw (Z axis rotation) from quaternion (x,y,z,w)
-  const double siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
-  const double cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
-  return std::atan2(siny_cosp, cosy_cosp);
-}
+
+
 
 /**
  * @class ControlNode
@@ -147,8 +141,7 @@ ControlNode::ControlNode()
 void ControlNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   current_v_ = msg->twist.twist.linear.x;
-  //current_psi_k_ = tf2::getYaw(msg->pose.pose.orientation);
-  current_psi_k_ = yaw_from_quat(msg->pose.pose.orientation);
+  current_psi_k_ = tf2::getYaw(msg->pose.pose.orientation);
   lateral_controller_->updateVelocity(current_v_);
   // Note: last_update_time_ is now only updated in laneCallback for consistent dt calculation
 }
