@@ -83,7 +83,7 @@ ControlNode::ControlNode()
 
   // Target velocity and lateral offset
   v_ref_ = 0.8;     // Target velocity [m/s]
-  y_target_ = -0.06;  // Target lateral offset [m]
+  y_target_ = 0.0;  // Target lateral offset [m]
                       // 0.0  = track center line
                       // 0.06 = maintain 60mm right offset
                       // -0.06 = maintain 60mm left offset
@@ -153,9 +153,9 @@ void ControlNode::laneCallback(
   const rusty_racer_interfaces::msg::LaneDeviation::SharedPtr msg)
 {
   // Extract data from LaneDeviation message
-  double y = msg->lateral_error;
-  double phi_k = msg->heading_error;
-  double curvature = msg->curvature;  // Curvature for feedforward control
+  double y_raw = msg->lateral_error;
+  double phi_raw = msg->heading_error;
+  double curv_raw = msg->curvature;  // Curvature for feedforward control
 
   // Calculate time step (using laneCallback timing for stable dt)
   auto current_time = this->now();
@@ -164,25 +164,66 @@ void ControlNode::laneCallback(
     dt = 0.02;  // Default 50Hz if invalid
   }
 
+  double y     = std::clamp(y_raw,     -0.30, 0.30);  // 先保守一点：最多±30cm
+  double phi_k = std::clamp(phi_raw, -0.60, 0.60);  // 最多±0.6rad(≈34°)
+  double curvature = std::clamp(curv_raw, -2.0, 2.0); 
+
+  const bool hit_y_border   = (std::abs(y_raw)   > 0.30);
+  const bool hit_phi_border = (std::abs(phi_raw) > 0.60);
+  const bool hit_curv_border= (std::abs(curv_raw)> 2.0);  
+
+  bool suspicious_jump =false;
+  if(have_last_steer_){
+    const double delta_candidate =lateral_controller_->compute(y,y_target_,phi_k,curvature,dt);
+    const double steer_candidate = -delta_candidate;
+    if (std::abs(steer_candidate - last_steer_cmd_) > 0.25) {
+      suspicious_jump = true;
+    }
+  }
+
+  const bool bad_frame = hit_y_border || hit_phi_border || hit_curv_border || suspicious_jump;
+
   // Compute safe velocity based on curvature and lateral error
   double v_safe = compute_safe_velocity(pi_params_, v_ref_, curvature, std::abs(y));
+  
 
   // Longitudinal control: PI controller + mapping
   double v_cmd = pi_step(pi_params_, pi_state_, v_safe, current_v_, dt);
   double motor_level = speed_to_motor_level(v_cmd, pi_params_.v_max);
 
   // Lateral control: PD controller with curvature feedforward
-  double delta = lateral_controller_->compute(y, y_target_, phi_k, curvature, dt);
-
+  //double delta = lateral_controller_->compute(y, y_target_, phi_k, curvature, dt);
+  //lateral control with bad-frame hold
+  double steer_cmd = 0.0;
+  double delta = 0.0; 
+  if (bad_frame && have_last_steer_) {
+    // hold last steering for one bad perception frame
+    steer_cmd = last_steer_cmd_ *0.8;
+  } else {
+    delta = lateral_controller_->compute(y, y_target_, phi_k, curvature, dt);
+    steer_cmd = -delta;                 // keep your sign convention
+    last_steer_cmd_ = steer_cmd;
+    have_last_steer_ = true;
+  }
   // Create motor command message with timestamp
   auto cmd = rusty_racer_interfaces::msg::MotorCommand();
   cmd.header = msg->header;  // Timestamp from lane deviation message
   cmd.motor_level = motor_level;
-  cmd.steering_angle = delta;
+  //cmd.steering_angle = -delta;
+  cmd.steering_angle = steer_cmd;
   motor_cmd_pub_->publish(cmd);
 
   // Update timestamp for next iteration
   last_update_time_ = current_time;
+
+  RCLCPP_INFO_THROTTLE(
+    this->get_logger(), *this->get_clock(), 200,
+    "y_raw=%.3f phi_raw=%.3f curv_raw=%.4f | y=%.3f phi=%.3f curv=%.4f | dt=%.3f bad=%d steer=%.3f delta=%.3f",
+    y_raw, phi_raw, curv_raw,
+    y, phi_k, curvature,
+    dt, bad_frame ? 1 : 0, steer_cmd, delta);
+
+
 }
 
 /**

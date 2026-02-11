@@ -75,6 +75,8 @@ private:
   double current_v_;       ///< Current velocity [m/s]
   double current_psi_k_;   ///< Current yaw angle [rad]
   rclcpp::Time last_update_time_;  ///< Last update timestamp
+  double last_steer_cmd_ = 0.0;   ///< Last steering command [rad]
+  bool have_last_steer_ = false;  ///< Whether last steering command is valid
 
   // ROS2 communication
   rclcpp::Subscription < nav_msgs::msg::Odometry > ::SharedPtr odom_sub_;

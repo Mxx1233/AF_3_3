@@ -72,7 +72,7 @@ public:
   double compute(double y, double y_target, double phi_k, double curvature, double dt)
   {
     (void)dt;  // Unused parameter for PD controller
-
+    (void)curvature;
     // Lateraler Fehler berechnen
     double e_y = y - y_target;
 
@@ -81,7 +81,8 @@ public:
     double phi_L_star_feedback = -kp_ * e_y - (kp_ + kd_) * phi_k;
 
     // Feedforward: φ*L_feedforward = κ·l  [Formel 3.4: κ·l = tan(φL)]
-    double phi_L_star_feedforward = curvature * l_;
+    double k_ff = 0.3; 
+    double phi_L_star_feedforward = -k_ff *curvature * l_;
 
     // Gesamte Stellgröße in tan-Domäne
     double phi_L_star = phi_L_star_feedback + phi_L_star_feedforward;
