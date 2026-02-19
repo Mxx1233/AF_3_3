@@ -12,9 +12,14 @@ find_package(rosidl_default_generators REQUIRED)
 
 # Declare message files
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/FloatPoint.msg"
   "msg/LaneDeviation.msg"
+  "msg/LaneMarking.msg"
   "msg/MotorCommand.msg"
+  "msg/Point.msg"
   "msg/TrafficSign.msg"
+  "msg/Trajectory.msg"
+  "msg/UltrasonicDistance.msg"
   DEPENDENCIES std_msgs
 )
 
