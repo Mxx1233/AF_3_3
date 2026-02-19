@@ -44,13 +44,13 @@ void LaneDetectionOutsideNode::imageCallback(sensor_msgs::msg::Image::SharedPtr 
   // -----------------------------------------------------------------------
   // Black out the top of the image so lane detection doesn't get confused by the horizon.
   // Start with 220. Increase if it still jumps lanes. Decrease if you can't see enough.
-  int HORIZON_CROP = 240;
+  int HORIZON_CROP = 250;
   if (HORIZON_CROP > 0 && HORIZON_CROP < image.rows) {
     cv::rectangle(
       image, cv::Point(0, 0), cv::Point(image.cols, HORIZON_CROP),
       cv::Scalar(0, 0, 0), cv::FILLED);
   }
-  cv::rectangle(image, cv::Point(0, 0), cv::Point(160, image.rows),
+  cv::rectangle(image, cv::Point(0, 0), cv::Point(355, image.rows),
               cv::Scalar(0, 0, 0), cv::FILLED);
 
   current_image_ = image;
@@ -158,8 +158,8 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
   Mat blurred;
   GaussianBlur(gray, blurred, Size(9, 9), 0);
 
-  int blockSize = 61;
-  int constSubtrahend = -70;
+  int blockSize = 55;
+  int constSubtrahend = -55;
 
   // [UPDATED] Resize trick + publish binarized debug (from updated code)
   Mat small_blurred;
@@ -173,6 +173,10 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
 
   Mat binary;
   resize(small_binary, binary, blurred.size());
+
+  // [UPDATED] Morphological opening to remove small noise/white spots
+  Mat opening_kernel = getStructuringElement(MORPH_ELLIPSE, Size(5, 5));
+  morphologyEx(binary, binary, MORPH_OPEN, opening_kernel, Point(-1, -1), 2);
 
   // [UPDATED FEATURE] Publish binarized image for debugging
   if (binarized_publisher_ && binarized_publisher_->get_subscription_count() > 0) {
@@ -227,8 +231,8 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
 
   // Search Region for the Right Lane
   vector<Point> fixed_rectangle_1 = {
-    Point(250, img_h),
-    Point(250, img_h - 300),
+    Point(320, img_h),
+    Point(320, img_h - 300),
     Point(620, img_h - 300),
     Point(620, img_h)
   };

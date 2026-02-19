@@ -179,22 +179,43 @@ void TrajectoryPlanNode::calculateAndPublishDeviation(
 
   // ═══════════════════════════════════════════════════════════════
   // TUNING PARAMETERS  ← adjust these to fix over/understeer
+  // STATIC VALUES for the different speed values
+  // 1.3 speed: (both)
+  // HEADING_LOOKAHEAD = 0.15
+  // HEADING_SCALE = 0.5
+  // CURVATURE_sCALE = 0.7
+  //
+  // 1.6 speed: (outside great) (inside its okay, cuts the inside lane a bit)
+  // HEADING_LOOKAHEAD = 0.34
+  // HEADING_SCALE = 0.45
+  // CURVATURE_sCALE = 0.65
+  // -> in Control, "y_target_ = -0.08 is the prettiest, but -0.06 or -0.03 should work as well."
+  //
+  // 1.9 (outside great / inside cuts right lane very much)
+  // HEADING_LOOKAHEAD = 0.53
+  // HEADING_SCALE = 0.4
+  // CURVATURE_sCALE = 0.6
+  //
+  // 2.2 (outside cuts a bit / inside cuts way too much)
+  // HEADING_LOOKAHEAD = 0.72
+  // HEADING_SCALE = 0.35
+  // CURVATURE_sCALE = 0.55
   // ═══════════════════════════════════════════════════════════════
   //
   // HEADING_LOOKAHEAD: where on the fitted curve the slope is read [m]
   //   Lower  (e.g. 0.15) → reacts to what is immediately ahead → less overshoot
   //   Higher (e.g. 0.50) → reacts far ahead → more anticipation but more overshoot
-  const double HEADING_LOOKAHEAD = 0.15;
+  const double HEADING_LOOKAHEAD = 0.34;
 
   // HEADING_SCALE: multiplier on heading_error [0..1]
   //   Lower  (e.g. 0.5) → reduces heading contribution → less overshoot in curves
   //   Higher (e.g. 1.0) → full heading correction
-  const double HEADING_SCALE = 0.3;
+  const double HEADING_SCALE = 0.45;
 
   // CURVATURE_SCALE: multiplier on the curvature feedforward [0..1]
   //   Lower  (e.g. 0.5) → weaker feedforward, relies more on feedback
   //   Higher (e.g. 1.0) → full feedforward
-  const double CURVATURE_SCALE = 0.7;
+  const double CURVATURE_SCALE = 0.65;
 
   const double SHORT_HORIZON_LIMIT = 0.60;
   const double LONG_HORIZON_LIMIT = 1.3;

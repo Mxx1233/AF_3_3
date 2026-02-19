@@ -475,7 +475,7 @@ ControlNode::ControlNode()
 
   // Longitudinal PI controller parameters
   PIParams pi_params;
-  pi_params.Kp = 1.1;    // Original: 1.0
+  pi_params.Kp = 1.5;    // Original: 1.0
   pi_params.Ki = 0.015;  // Original: 0.01
   pi_params.v_min = 0.0;
   pi_params.v_max = 2.0; // Original: 2.9
@@ -483,7 +483,7 @@ ControlNode::ControlNode()
   pi_state_ = init_pi();
 
   // Target velocity and lateral offset
-  v_ref_ = 0.6;       // Target velocity [m/s] (Original: 0.8) (best time 1.4)
+  v_ref_ = 1.6;       // Target velocity [m/s] (Original: 0.8) (best time 1.4)
   y_target_ = -0.06;  // Target lateral offset [m]
 
   // Initialize state
