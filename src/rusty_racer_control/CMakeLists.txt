@@ -18,9 +18,13 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(rusty_racer_interfaces REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # ============================================================================
 # Include-Verzeichnisse / Include Directories
@@ -36,9 +40,13 @@ ament_target_dependencies(control_node
         std_msgs
         geometry_msgs
         nav_msgs
+        sensor_msgs
         tf2
         tf2_geometry_msgs
         rusty_racer_interfaces
+        cv_bridge
+        image_transport
+        OpenCV
 )
 
 # ============================================================================
@@ -83,10 +91,14 @@ if(BUILD_TESTING)
           rclcpp
           geometry_msgs
           nav_msgs
+          sensor_msgs
           rusty_racer_interfaces
           std_msgs
           tf2
           tf2_geometry_msgs
+          cv_bridge
+          image_transport
+          OpenCV
   )
 
   # Compiler-Optionen für Tests

@@ -17,6 +17,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/MotorCommand.msg"
   "msg/LaneDeviation.msg"
   "msg/TrafficSign.msg"
+  "msg/Point.msg"
+  "msg/FloatPoint.msg"
+  "msg/LaneMarking.msg"
+  "msg/Trajectory.msg"
+  "msg/UltrasonicDistance.msg"
   DEPENDENCIES std_msgs
 )
 

@@ -26,7 +26,6 @@ class TrafficSignDetector:
         # Dies ist rechenintensiv und sollte nicht im Loop gemacht werden
         print(f"Lade Modell von: {model_path}")
         self.model = YOLO(model_path)
-
         # Hinweis: Hier gibt es keine Publisher, Subscriber oder Timer mehr!
         # Diese Logik-Klasse "wartet" nur darauf, dass eine Funktion aufgerufen wird.
 
@@ -103,16 +102,14 @@ class TrafficSignDetector:
             })
 
         # 4. Debug-Bild erstellen
-        # Wir nutzen die Standard-Plot-Funktion von YOLO als Basis
         annotated_frame = results.plot()
-
-        # Zusätzlich die Distanz in das Bild schreiben
         for det in detections_list:
             if det['distance'] > 0:
+                x1, y1, x2, y2 = det['bbox_xyxy']
                 txt = f"{det['distance']:.2f}m"
-                # Text an der oberen Kante des Bboxes platzieren
-                cv2.putText(annotated_frame, txt, (det['bbox'][0], det['bbox'][1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                cv2.putText(annotated_frame, txt, (int(x1), int(y1)-5),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
+
 
         return {
             'detections': detections_list,

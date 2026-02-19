@@ -5,7 +5,13 @@
 # frame_id: "base_link"
 std_msgs/Header header
 
-# z.B. "Stop", "Speed-limit 30"
+# Es gibt insgesamt 6 Strings:
+# 'end_express_way'
+# 'end_zone_speed_limit'
+# 'start_express_way'
+# 'start_zone_speed_limit'
+# 'stop_sign'
+# 'yield'
 string sign_id
 
 # Die Distanz zwischen Auto und Schildern
