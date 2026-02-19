@@ -1,6 +1,3 @@
-//
-// Created by psaf on 30.10.24.
-//
 #include "rclcpp/rclcpp.hpp"
 #include "psaf_trajectory_plan/trajectory_plan_node.hpp"
 
