@@ -28,12 +28,6 @@
 // ROS2 headers
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <sensor_msgs/msg/image.hpp>
-
-// OpenCV / cv_bridge headers
-#include <cv_bridge/cv_bridge.h>  // NOLINT(build/include_order)
-#include <opencv2/opencv.hpp>
-
 // Project interface headers
 #include "rusty_racer_interfaces/msg/lane_deviation.hpp"
 #include "rusty_racer_interfaces/msg/motor_command.hpp"
@@ -48,9 +42,9 @@
  * @class ControlNode
  * @brief Main control node for longitudinal and lateral control
  *
- * Dual-mode velocity source (selected at runtime via traffic_enabled_ param):
- *   - false: pure lane-following, v_ref = fixed cruise speed
- *   - true:  FSM mode, v_ref = TrafficFSM decision output
+ * Two velocity modes (selected at runtime via cruise_mode parameter):
+ *   - cruise_mode=true:  Gate-Only cruise (wait for start gate, then constant v_ref)
+ *   - cruise_mode=false: Full FSM (three-layer traffic sign logic)
  *
  * No curvature feedforward; lateral controller uses 3-param PD.
  */
@@ -62,28 +56,11 @@ private:
   // -- Callbacks -------------------------------------------------------
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
 
-<<<<<<< HEAD
-  /**
-   * @brief Main control loop (triggered by Lane Deviation)
-   */
-=======
->>>>>>> eabb7b2 (feat: integrate TrafficFSM, simplified controllers, updated interfaces)
   void laneCallback(
     const rusty_racer_interfaces::msg::LaneDeviation::SharedPtr msg);
 
   void trafficSignCallback(
     const rusty_racer_interfaces::msg::TrafficSign::SharedPtr msg);
-
-  void imageCallback(const sensor_msgs::msg::Image::SharedPtr msg);
-
-<<<<<<< HEAD
-  /**
-   * @brief Helper to draw the steering arrow on the debug image
-   */
-=======
-  // -- Debug overlay helper --------------------------------------------
->>>>>>> eabb7b2 (feat: integrate TrafficFSM, simplified controllers, updated interfaces)
-  void drawControlOverlay(cv::Mat & img, double steering_angle, double velocity);
 
   // -- Controllers -----------------------------------------------------
   std::unique_ptr < LateralController > lateral_controller_;
@@ -95,32 +72,36 @@ private:
   TrafficParams traffic_params_;
   CamFrame latest_cam_frame_;
   rclcpp::Time last_traffic_update_;
-  bool traffic_enabled_;
 
   // Timeout for FSM sign input [seconds].
-  // Falls back to cruise speed when no TrafficSign received within this window.
   static constexpr double kTrafficSignTimeout = 2.5;
 
+  // -- Mode selection --------------------------------------------------
+  bool cruise_mode_;           // true = Gate-Only cruise, false = Full FSM
+
+  // Cruise-mode gate state (two-phase)
+  bool cruise_gate_unlocked_;    // false = waiting at start gate, true = cruising
+  bool cruise_stop_seen_;        // Phase 1: Stop sign confirmed present
+  int cruise_stop_on_count_;     // Phase 1: consecutive frames with Stop
+  int cruise_stop_gone_count_;   // Phase 2: consecutive frames without Stop
+
   // -- Target values ---------------------------------------------------
-  double v_ref_;       // Cruise speed [m/s] (used when traffic_enabled_ == false,
-                       // or as fallback on timeout)
+  double v_ref_;       // Cruise speed [m/s]:
+                       //   cruise_mode_=true  -> fixed speed after gate
+                       //   cruise_mode_=false -> unused (FSM decides)
   double y_target_;    // Lateral offset target [m]
 
   // -- Current state ---------------------------------------------------
   double current_v_;
   double current_psi_k_;
   rclcpp::Time last_update_time_;
-
-  // -- Debug overlay image buffer --------------------------------------
-  cv::Mat current_image_;
+  double motor_level_smooth_ = 0.0;  // Smoothed motor command [0,1]
 
   // -- ROS2 communication ----------------------------------------------
   rclcpp::Subscription < nav_msgs::msg::Odometry > ::SharedPtr odom_sub_;
   rclcpp::Subscription < rusty_racer_interfaces::msg::LaneDeviation > ::SharedPtr lane_sub_;
   rclcpp::Subscription < rusty_racer_interfaces::msg::TrafficSign > ::SharedPtr traffic_sign_sub_;
-  rclcpp::Subscription < sensor_msgs::msg::Image > ::SharedPtr sub_image_;
   rclcpp::Publisher < rusty_racer_interfaces::msg::MotorCommand > ::SharedPtr motor_cmd_pub_;
-  rclcpp::Publisher < sensor_msgs::msg::Image > ::SharedPtr pub_debug_;
 };
 
 #endif  // RUSTY_RACER_CONTROL__CONTROL_NODE_H_

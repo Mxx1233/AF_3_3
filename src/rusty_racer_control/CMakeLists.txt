@@ -19,8 +19,6 @@ find_package(nav_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(cv_bridge REQUIRED)
-find_package(OpenCV REQUIRED)
 find_package(rusty_racer_interfaces REQUIRED)
 
 # ============================================================================
@@ -41,14 +39,12 @@ ament_target_dependencies(control_node
   sensor_msgs
   tf2
   tf2_geometry_msgs
-  cv_bridge
   rusty_racer_interfaces
 )
 
 # Jazzy: explicitly link rosidl-generated message targets
 target_link_libraries(control_node
   ${rusty_racer_interfaces_TARGETS}
-  ${OpenCV_LIBS}
 )
 
 # ============================================================================
