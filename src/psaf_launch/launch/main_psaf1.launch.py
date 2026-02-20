@@ -19,12 +19,12 @@ __ucbridge = IncludeLaunchDescription(
             'launch',
             'ucbridge_old.launch.py')))
             
-#__realsense2_camera = IncludeLaunchDescription(
-#    PythonLaunchDescriptionSource(
-#       os.path.join(
-#            get_package_share_directory('psaf_launch'),
-#            'launch',
-#            'realsense2_camera_455.launch.py')))
+__realsense2_camera = IncludeLaunchDescription(
+    PythonLaunchDescriptionSource(
+       os.path.join(
+            get_package_share_directory('psaf_launch'),
+            'launch',
+            'realsense2_camera_455.launch.py')))
 
 
 __state_estimation = IncludeLaunchDescription(PythonLaunchDescriptionSource(
@@ -50,32 +50,29 @@ __detect_traffic_sign_node = IncludeLaunchDescription(PythonLaunchDescriptionSou
 
 def generate_launch_description():
 
-    record_arg = DeclareLaunchArgument(
-        'record',
-        default_value='false',
-        description='Set to "true" to enable data recording, "false" to disable.')
+    # record_arg = DeclareLaunchArgument(
+    #     'record',
+    #     default_value='false',
+    #     description='Set to "true" to enable data recording, "false" to disable.')
 
-    recorder_node = Node(
-        package='log_pkg',
-        executable='logger_node',
-        name='data_recorder',
-        output='screen',
-        condition=IfCondition(LaunchConfiguration('record'))
-    )
+    # recorder_node = Node(
+    #     package='log_pkg',
+    #     executable='logger_node',
+    #     name='data_recorder',
+    #     output='screen',
+    #     condition=IfCondition(LaunchConfiguration('record'))
+    # )
 
     return LaunchDescription([
         LogInfo(msg=['Start model car for the Carolo-Cup']),
-        record_arg,
+        #record_arg,
 
         __ucbridge,
-        #__realsense2_camera,
+        __realsense2_camera,
 
         LogInfo(msg=['Start system layout']),
         __state_estimation,
         __uc_bridge_adapter,
         __control,
         __detect_traffic_sign_node,
-
-        LogInfo(msg=['Starting Data Recorder (Conditional)']),
-        recorder_node
     ])

@@ -13,8 +13,8 @@ class DetectTrafficSignNode(Node):
         super().__init__("detect_traffic_sign")
 
         # ---- Parameter (damit du nichts hardcoden musst) ----
-        self.declare_parameter("image_topic", "/camera/realsense2_camera_node/color/image_raw")
-        self.declare_parameter("depth_topic", "/camera/realsense2_camera_node/aligned_depth_to_color/image_raw")
+        self.declare_parameter("image_topic", "/camera/camera/color/image_raw")
+        self.declare_parameter("depth_topic", "/camera/camera/aligned_depth_to_color/image_raw")
         self.declare_parameter("detections_topic", "/traffic_sign/detections")
         self.declare_parameter("debug_image_topic", "/traffic_sign/debug_image")
 
@@ -61,13 +61,20 @@ class DetectTrafficSignNode(Node):
         self.pub_dbg = self.create_publisher(Image, dbg_topic, 10)
 
     def on_frames(self, msg_rgb, msg_depth):
+        
+        t0 = time.time()
+
         # 1. ROS -> OpenCV
         cv_rgb = self.bridge.imgmsg_to_cv2(msg_rgb, "bgr8")
         cv_depth = self.bridge.imgmsg_to_cv2(msg_depth, "16UC1")
 
         # 2. Logik-Calculator aufrufen
         # Wir erhalten: Ergebnisse (Liste von Dicts), Debug-Bild, (Inferenzzeit ignorieren wir hier)
-        detections, debug_img, _ = self.detector.process(cv_rgb, cv_depth)
+        result = self.detector.process(cv_rgb, cv_depth)
+
+        detections = result['detections']
+        debug_img = result['debug_image']
+        infer_ms = result['infer_ms']
 
         total_ms = (time.time() - t0) * 1000.0
 
@@ -92,12 +99,13 @@ class DetectTrafficSignNode(Node):
             self.n_frames = 0
 
         # 4. Ergebnisse publizieren
-        for d in detections:
-            # Erstelle die TrafficSign Nachricht (string + float32)
+        if detections:
+            closest = min(detections, key=lambda d: d['distance'])
+
             msg = TrafficSign()
-            # Falls deine msg Felder "label" und "distance" heißen:
-            msg.sign_id = str(d['class_name'])
-            msg.distance = float(d['distance'])
+            msg.sign_id = str(closest['class_name'])
+            msg.distance = float(closest['distance'])
+
             self.pub_det.publish(msg)
 
         # 5. Debug-Bild publizieren

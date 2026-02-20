@@ -12,7 +12,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         Node(
-            name='realsense2_camera_node',
+            name='camera',
             package='realsense2_camera',
             executable='realsense2_camera_node',
             parameters=[config],

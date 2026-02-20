@@ -1,5 +1,6 @@
 # Main How-To:
 
+
 ## Terminal 1 - Start camera
 ```
 cd ws-template
@@ -23,7 +24,7 @@ source install/setup.bash
 ros2 run psaf_trajectory_plan trajectory_plan
 ```
 
-## Terminal 4 - Main run
+## Terminal 4 - Main run (Now include starting camera)
 ```
 cd Rusty-Racer/wise-2025-26-gruppe-c
 colcon build
