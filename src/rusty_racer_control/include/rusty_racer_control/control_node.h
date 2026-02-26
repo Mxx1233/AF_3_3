@@ -79,11 +79,9 @@ private:
   // -- Mode selection --------------------------------------------------
   bool cruise_mode_;           // true = Gate-Only cruise, false = Full FSM
 
-  // Cruise-mode gate state (two-phase)
-  bool cruise_gate_unlocked_;    // false = waiting at start gate, true = cruising
-  bool cruise_stop_seen_;        // Phase 1: Stop sign confirmed present
-  int cruise_stop_on_count_;     // Phase 1: consecutive frames with Stop
-  int cruise_stop_gone_count_;   // Phase 2: consecutive frames without Stop
+  // Cruise-mode gate state
+  bool cruise_gate_unlocked_;  // false = waiting at start gate, true = cruising
+  int cruise_stop_gone_count_;  // consecutive frames without Stop sign (debounce)
 
   // -- Target values ---------------------------------------------------
   double v_ref_;       // Cruise speed [m/s]:

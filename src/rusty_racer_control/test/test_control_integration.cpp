@@ -89,12 +89,12 @@ protected:
   void TearDown() override {rclcpp::shutdown();}
 };
 
-TEST_F(ParamTest, TrafficEnabledParam) {
-  auto node = std::make_shared<rclcpp::Node>("test_node");
-  node->declare_parameter("traffic_enabled", true);
-  EXPECT_TRUE(node->get_parameter("traffic_enabled").as_bool());
-  node->set_parameter(rclcpp::Parameter("traffic_enabled", false));
-  EXPECT_FALSE(node->get_parameter("traffic_enabled").as_bool());
+TEST_F(ParamTest, CruiseModeParam) {
+  auto node = std::make_shared<rclcpp::Node>("test_node_cruise");
+  node->declare_parameter("cruise_mode", true);
+  EXPECT_TRUE(node->get_parameter("cruise_mode").as_bool());
+  node->set_parameter(rclcpp::Parameter("cruise_mode", false));
+  EXPECT_FALSE(node->get_parameter("cruise_mode").as_bool());
 }
 
 // -- Boundary conditions ----------------------------------------------------
