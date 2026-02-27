@@ -193,8 +193,9 @@ struct PIParams
  */
 struct PIState
 {
-  double v_cmd = 0.0;  // Aktueller Geschwindigkeitsbefehl [m/s]
-  double e_pre = 0.0;  // Vorheriger Geschwindigkeitsfehler [m/s]
+  double v_cmd    = 0.0;  // Aktueller Geschwindigkeitsbefehl [m/s]
+  double e_pre    = 0.0;  // Vorheriger Fehler (für Kompatibilität behalten, V6 ungenutzt)
+  double integral = 0.0;  // Fehlerintegral ∫e dt (Positions-PI, V6)
 };
 
 /**
@@ -204,13 +205,14 @@ struct PIState
 inline PIState init_pi()
 {
   PIState s;
-  s.v_cmd = 0.0;
-  s.e_pre = 0.0;
+  s.v_cmd    = 0.0;
+  s.e_pre    = 0.0;
+  s.integral = 0.0;
   return s;
 }
 
 /**
- * @brief PI-Geschwindigkeitsregler - Inkrementelle PI-Berechnung
+ * @brief PI-Geschwindigkeitsregler - Positions-PI (V6)
  * @param p Reglerparameter
  * @param s Reglerzustand (wird modifiziert)
  * @param v_ref Sollgeschwindigkeit [m/s]
@@ -218,11 +220,12 @@ inline PIState init_pi()
  * @param dt Abtastzeit [s]
  * @return v_cmd Geschwindigkeitsbefehl [m/s]
  *
- * Algorithmus:
+ * Algorithmus (Positions-Form):
  *   1. Fehler berechnen: e_k = v_ref - v_k
- *   2. Inkrementelles PI: Δv = Kp·(e_k - e_pre) + Ki·dt·e_k
- *   3. Befehl aktualisieren: v_cmd = v_cmd_pre + Δv
+ *   2. Integral aktualisieren: integral += e_k * dt
+ *   3. Ausgang: v_cmd_raw = Kp * e_k + Ki * integral
  *   4. Begrenzen auf [v_min, v_max]
+ *   5. Back-calculation Anti-Windup: integral korrigieren bei Sättigung
  */
 inline double pi_step(
   const PIParams & p, PIState & s, double v_ref, double v_k,
@@ -231,16 +234,21 @@ inline double pi_step(
   // Fehler berechnen
   double e_k = v_ref - v_k;
 
-  // Inkrementelles PI
-  double delta_v = p.Kp * (e_k - s.e_pre) + p.Ki * dt * e_k;
+  // Integral aktualisieren
+  s.integral += e_k * dt;
 
-  // Befehl aktualisieren
-  s.v_cmd += delta_v;
+  // Positions-PI: direkte Reaktion auf Fehler (nicht auf Fehleränderung)
+  double v_cmd_raw = p.Kp * e_k + p.Ki * s.integral;
 
   // Begrenzung
-  s.v_cmd = std::max(p.v_min, std::min(s.v_cmd, p.v_max));
+  s.v_cmd = std::max(p.v_min, std::min(v_cmd_raw, p.v_max));
 
-  // Zustand speichern
+  // Back-calculation Anti-Windup: Integral zurückrechnen bei Sättigung
+  if (p.Ki > 0.0) {
+    s.integral -= (v_cmd_raw - s.v_cmd) / p.Ki;
+  }
+
+  // e_pre für Kompatibilität mit control_node.cpp-Reset behalten
   s.e_pre = e_k;
 
   return s.v_cmd;

@@ -17,7 +17,7 @@ ros2 launch realsense2_camera rs_launch.py
 
 ## Terminal 2 - Lane Detection
 ```
-cd Rusty-Racer/wise-2025-26-gruppe-c/src
+cd Rusty-Racer/wise-2025-26-gruppe-c
 colcon build
 source install/setup.bash
 ros2 run psaf_lane_detection_outside lane_detection_outside
@@ -25,7 +25,7 @@ ros2 run psaf_lane_detection_outside lane_detection_outside
 
 ## Terminal 3 - Trajectory Plan
 ```
-cd Rusty-Racer/wise-2025-26-gruppe-c/src
+cd Rusty-Racer/wise-2025-26-gruppe-c
 colcon build
 source install/setup.bash
 ros2 run psaf_trajectory_plan trajectory_plan

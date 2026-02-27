@@ -31,6 +31,7 @@ TrafficParams defaultParams()
   p.stop_hold_ms = 3000;
   p.on_count = 3;
   p.off_count = 3;
+  p.start_on_count = 3;
   p.start_off_count = 6;
   p.start_stop_lock_dist_m = 0.30f;
   p.same_sign_block_dist_m = 1.0f;
@@ -72,6 +73,17 @@ TEST(BasicTest, SignIdStringMapping) {
   EXPECT_EQ(signIdToType(std::string("yield")), SignType::YieldSlow);
   EXPECT_EQ(signIdToType(std::string("garbage")), SignType::Unknown);
   EXPECT_EQ(signIdToType(std::string("")), SignType::Unknown);
+}
+
+// Helper: unlock gate via two-phase sequence (Phase1: Stop x3, Phase2: Unknown x6)
+void unlockGate(TrafficFSM & fsm, TrafficParams & p)
+{
+  for (int i = 0; i < 3; i++) {
+    fsm.step(cam(SignType::Stop, 1.0f), 20, p);  // Phase 1: confirm Stop present
+  }
+  for (int i = 0; i < 6; i++) {
+    fsm.step(cam(SignType::Unknown, 0), 20, p);  // Phase 2: confirm Stop gone
+  }
 }
 
 // MockMsg with int sign_id (for int-overload tests)
@@ -178,10 +190,8 @@ protected:
   {
     fsm_.reset();
     p_ = defaultParams();
-    // Unlock start gate
-    for (int i = 0; i < 10; i++) {
-      fsm_.step(cam(SignType::Unknown, 0), 20, p_);
-    }
+    // Unlock start gate (two-phase: Stop x3, then Unknown x6)
+    unlockGate(fsm_, p_);
   }
   TrafficFSM fsm_;
   TrafficParams p_;
@@ -229,10 +239,8 @@ protected:
   {
     fsm_.reset();
     p_ = defaultParams();
-    // Unlock start gate
-    for (int i = 0; i < 10; i++) {
-      fsm_.step(cam(SignType::Unknown, 0), 20, p_);
-    }
+    // Unlock start gate (two-phase: Stop x3, then Unknown x6)
+    unlockGate(fsm_, p_);
   }
   TrafficFSM fsm_;
   TrafficParams p_;
@@ -287,10 +295,8 @@ TEST(DebounceTest, FlickerRejected) {
   TrafficFSM fsm;
   fsm.reset();
   TrafficParams p = defaultParams();
-  // Unlock gate
-  for (int i = 0; i < 10; i++) {
-    fsm.step(cam(SignType::Unknown, 0), 20, p);
-  }
+  // Unlock gate (two-phase)
+  unlockGate(fsm, p);
   // Flicker: appear-disappear
   fsm.step(cam(SignType::Stop, 0.8f), 20, p);
   fsm.step(cam(SignType::Unknown, 0), 20, p);
@@ -303,10 +309,8 @@ TEST(OneShotTest, NoDuplicateTriggerWithin1m) {
   TrafficFSM fsm;
   fsm.reset();
   TrafficParams p = defaultParams();
-  // Unlock gate
-  for (int i = 0; i < 10; i++) {
-    fsm.step(cam(SignType::Unknown, 0), 20, p);
-  }
+  // Unlock gate (two-phase)
+  unlockGate(fsm, p);
   // First stop trigger
   for (int i = 0; i < 5; i++) {
     fsm.step(cam(SignType::Stop, 0.8f), 20, p);
