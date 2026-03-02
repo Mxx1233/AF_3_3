@@ -34,16 +34,16 @@ class DetectTrafficSignNode(Node):
         self.declare_parameter('publish_debug_image', True)
 
         image_topic = (
-            self.get_parameter('image_topic').get_parameter_value().string_value
+            self.get_parameter('topics.image_topic').get_parameter_value().string_value
         )
         depth_topic = (
-            self.get_parameter('depth_topic').get_parameter_value().string_value
+            self.get_parameter('topics.depth_topic').get_parameter_value().string_value
         )
         det_topic = (
-            self.get_parameter('detections_topic').get_parameter_value().string_value
+            self.get_parameter('topics.detections_topic').get_parameter_value().string_value
         )
         dbg_topic = (
-            self.get_parameter('debug_image_topic').get_parameter_value().string_value
+            self.get_parameter('topics.debug_image_topic').get_parameter_value().string_value
         )
         model_path = self.get_parameter('model_path').get_parameter_value().string_value
 
