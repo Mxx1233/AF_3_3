@@ -96,7 +96,7 @@ code:
 
 variables:
   # Packages that should be ignored from build, test, and coverage
-  PACKAGES_TO_IGNORE: "psaf_configuration psaf_firststeps"
+  PACKAGES_TO_IGNORE: "psaf_firststeps"
   PACKAGES_TO_COVERAGE_IGNORE: "rusty_racer_interfaces"
   # CMake arguments for enabling Gcov/Lcov profiling
 
@@ -109,7 +109,7 @@ coverage:
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
-    - lcov --zerocounters --directory . || exit 1
+    - lcov --zerocounters --directory . || exit 1a
 
     # --- 3. Run Tests ---
     - echo "--- 3. Running Tests (on all packages) ---"
