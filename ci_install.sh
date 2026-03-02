@@ -12,6 +12,5 @@ apt-get update && apt-get install -y \
     ros-jazzy-foxglove-bridge \
     python3-pip
 
-pip install --upgrade pip --break-system-packages
 pip install "setuptools>=65.0.0,<80.0.0" --force-reinstall --break-system-packages
 pip install ultralytics --ignore-installed --break-system-packages
