@@ -105,7 +105,7 @@ coverage:
   script:
     # --- 1. Build ---
     - echo "--- 1. Building all packages with Coverage Flags ---"
-    - colcon build --ordered-build --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1" || exit 1
+    - colcon build --cmake-clean-cache --packages-ignore $PACKAGES_TO_IGNORE --cmake-args -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -DCMAKE_C_FLAGS="-fprofile-arcs -ftest-coverage -DCOVERAGE_RUN=1" || exit 1
 
     # --- 2. Initialize LCOV Counters ---
     - echo "--- 2. Initializing LCOV Counters ---"
