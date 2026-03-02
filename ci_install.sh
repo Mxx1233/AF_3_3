@@ -7,3 +7,9 @@ dpkg -i ros-jazzy-psaf-ucbridge-msgs_2.3.3-0noble_amd64.deb
 dpkg -i ros-jazzy-psaf-ucbridge_2.3.3-0noble_amd64.deb
 rm ros-jazzy-psaf-ucbridge-msgs_2.3.3-0noble_amd64.deb
 rm ros-jazzy-psaf-ucbridge_2.3.3-0noble_amd64.deb
+
+apt-get update && apt-get install -y ros-jazzy-foxglove-bridge
+apt-get update && apt-get install -y \
+    ros-jazzy-foxglove-bridge \
+    python3-pip
+pip install ultralytics --break-system-packages

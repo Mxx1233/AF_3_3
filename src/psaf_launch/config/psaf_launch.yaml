@@ -1,3 +1,46 @@
+/**:
+  ros__parameters:
+    topics:
+      motor_command: "/motor_command"
+      set_steering: "/uc_bridge/set_steering"
+      odom_topic: "/odom"
+      imu_topic: "/imu_data"
+      dt_topic: "/dt_data"
+      image_topic: "/camera/camera/color/image_raw"
+      depth_topic: "/camera/camera/aligned_depth_to_color/image_raw"
+      detections_topic: "/traffic_sign/detections"
+      debug_image_topic: "/traffic_sign/debug_image"
+
 launch:
   ros__parameters:
     update_frequency: 30.0
+
+/state_estimation_node:
+  ros__parameters:
+    dt_timeout_sec: 0.5
+    publish_rate: 110.0
+
+/lane_detection_outside:
+  ros__parameters:
+    update_frequency: 100.0
+    
+/trajectory_plan:
+  ros__parameters:
+    update_frequency: 125.0
+    
+/control_node:
+  ros__parameters:
+    lat_kp: 0.75
+    lat_ki: 0.15
+    cruise_mode: True
+    v_ref: 1.15
+    
+/detect_traffic_sign_node:
+  ros__parameters:
+    model_path: "src/traffic_sign_yolo/model/best_run_1_long_30_01_2026.pt"
+    conf_th: 0.35
+    iou_th: 0.45
+    imgsz: 512
+    device: "cpu"
+    publish_debug_image: True
+

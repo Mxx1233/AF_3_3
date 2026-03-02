@@ -60,7 +60,8 @@ protected:
 
 private:
     // Standard subscribers
-  rclcpp::Subscription<rusty_racer_interfaces::msg::LaneMarking>::SharedPtr lane_markings_subscriber_;
+  rclcpp::Subscription<rusty_racer_interfaces::msg::LaneMarking>::SharedPtr
+    lane_markings_subscriber_;
   rclcpp::Publisher<rusty_racer_interfaces::msg::Trajectory>::SharedPtr trajectory_publisher_;
   rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr err_publisher_;
   rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr state_subscriber_;

@@ -38,7 +38,6 @@
 #define TRAJECTORY_TOPIC     "trajectory/trajectory"
 
 
-
 /**
 * Define realsense topics
 * The number of camera streams. Note: Even if only one realsense camera is mounted to the car,

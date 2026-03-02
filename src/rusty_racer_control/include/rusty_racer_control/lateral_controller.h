@@ -33,7 +33,7 @@
 // //  * φ*L_feedback = -kp·e_y - (kp+kd)·φK
 // //  * φ*L_feedforward = κ·l  [Dokumentformel 3.4]
 // //  * φ*L = φ*L_feedback + φ*L_feedforward
-// //  * 
+// //  *
 // //  * Vorfilter (Umrechnung in Winkel-Domäne):
 // //  * δ = arctan(φ*L)
 // //  */
@@ -81,7 +81,7 @@
 // //     double phi_L_star_feedback = -kp_ * e_y - (kp_ + kd_) * phi_k;
 
 // //     // Feedforward: φ*L_feedforward = κ·l  [Formel 3.4: κ·l = tan(φL)]
-// //     double k_ff = 0.1; 
+// //     double k_ff = 0.1;
 // //     double phi_L_star_feedforward = k_ff *curvature * l_;
 
 // //     // Gesamte Stellgröße in tan-Domäne
@@ -110,8 +110,6 @@
 // //   double kp_;   // P-Verstärkung
 // //   double kd_;   // D-Verstärkung
 // // };
-
-
 
 
 // // Copyright 2025 Rusty Racer Team

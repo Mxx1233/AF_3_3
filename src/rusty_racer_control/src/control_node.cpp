@@ -48,7 +48,6 @@
 // #include "rusty_racer_interfaces/msg/motor_command.hpp"
 
 
-
 // /**
 //  * @class ControlNode
 //  * @brief Main control node for longitudinal and lateral control
@@ -166,11 +165,11 @@
 
 //   double y     = std::clamp(y_raw,     -0.30, 0.30);  // 先保守一点：最多±30cm
 //   double phi_k = std::clamp(phi_raw, -0.60, 0.60);  // 最多±0.6rad(≈34°)
-//   double curvature = std::clamp(curv_raw, -2.0, 2.0); 
+//   double curvature = std::clamp(curv_raw, -2.0, 2.0);
 
 //   const bool hit_y_border   = (std::abs(y_raw)   > 0.30);
 //   const bool hit_phi_border = (std::abs(phi_raw) > 0.60);
-//   const bool hit_curv_border= (std::abs(curv_raw)> 2.0);  
+//   const bool hit_curv_border= (std::abs(curv_raw)> 2.0);
 
 //   bool suspicious_jump =false;
 //   if(have_last_steer_){
@@ -185,7 +184,7 @@
 
 //   // Compute safe velocity based on curvature and lateral error
 //   // double v_safe = compute_safe_velocity(pi_params_, v_ref_, curvature, std::abs(y));
-  
+
 
 //   // Longitudinal control: PI controller + mapping
 //   double v_cmd = pi_step(pi_params_, pi_state_, v_ref, current_v_, dt);//v_safe to v_ref
@@ -195,7 +194,7 @@
 //   //double delta = lateral_controller_->compute(y, y_target_, phi_k, curvature, dt);
 //   //lateral control with bad-frame hold
 //   double steer_cmd = 0.0;
-//   double delta = 0.0; 
+//   double delta = 0.0;
 //   if (bad_frame && have_last_steer_) {
 //     // hold last steering for one bad perception frame
 //     steer_cmd = last_steer_cmd_ *0.8;
@@ -236,10 +235,6 @@
 //   rclcpp::shutdown();
 //   return 0;
 // }
-
-
-
-
 
 
 // // Copyright 2025 Rusty Racer Team
@@ -429,11 +424,6 @@
 // }
 
 
-
-
-
-
-
 #include "rusty_racer_control/control_node.h"
 
 #include <cmath>
@@ -446,7 +436,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 // --- TF2 Includes (Order is important for linking!) ---
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -543,7 +533,7 @@ void ControlNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
   // --- FIX: Explicit conversion to avoid linker error ---
   tf2::Quaternion q;
   tf2::fromMsg(msg->pose.pose.orientation, q);
-  
+
   // Convert quaternion to yaw (safe method)
   double roll, pitch, yaw;
   tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
@@ -563,7 +553,7 @@ void ControlNode::imageCallback(const sensor_msgs::msg::Image::SharedPtr msg)
     // Store image for processing in the control loop
     // Using toCvCopy ensures we have a mutable copy
     current_image_ = cv_bridge::toCvCopy(msg, "bgr8")->image;
-  } catch (cv_bridge::Exception& e) {
+  } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
   }
 }
@@ -660,19 +650,19 @@ void ControlNode::laneCallback(
 //   // ===================== 9) 最关键：更新 last_update_time_（必须在这里） =====================
 //   last_update_time_ = current_time;
 // }
-//   
+//
 // /*原来的
   // --- Visualization Logic ---
   if (!current_image_.empty()) {
     cv::Mat debug_view = current_image_.clone();
-    
+
     // Draw the steering overlay
     drawControlOverlay(debug_view, delta, v_cmd);
 
     // Convert back to ROS message and publish
-    sensor_msgs::msg::Image::SharedPtr out_msg = 
+    sensor_msgs::msg::Image::SharedPtr out_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", debug_view).toImageMsg();
-    
+
     out_msg->header.stamp = this->now();
     out_msg->header.frame_id = "camera_link"; // Adjust if needed
     pub_debug_->publish(*out_msg);
@@ -685,12 +675,12 @@ void ControlNode::laneCallback(
   cmd.steering_angle = -delta;  // Direct pass-through (coordinate system already corrected in trajectory)
   motor_cmd_pub_->publish(cmd);
 }
- 
+
 
 /**
  * @brief Helper to draw steering arrow and text
  */
-void ControlNode::drawControlOverlay(cv::Mat& img, double steering_angle, double velocity)
+void ControlNode::drawControlOverlay(cv::Mat & img, double steering_angle, double velocity)
 {
   int h = img.rows;
   int w = img.cols;
@@ -698,8 +688,8 @@ void ControlNode::drawControlOverlay(cv::Mat& img, double steering_angle, double
 
   // 1. Draw Steering Arrow
   // Length relative to image height
-  double arrow_len = h * 0.35; 
-  
+  double arrow_len = h * 0.35;
+
   // Calculate tip position
   // delta > 0 is Left Turn. In Image X grows right, so Left is -X.
   // We use sin/cos logic:
@@ -710,19 +700,19 @@ void ControlNode::drawControlOverlay(cv::Mat& img, double steering_angle, double
   arrow_tip.y = center_bottom.y - static_cast<int>(arrow_len * std::cos(steering_angle));
 
   // Cyan Color (BGR: 255, 255, 0)
-  cv::Scalar color(255, 255, 0); 
+  cv::Scalar color(255, 255, 0);
   cv::arrowedLine(img, center_bottom, arrow_tip, color, 5, 8, 0, 0.1);
 
   // 2. Draw Text Info with background box
   std::string txt_steer = "Steer: " + std::to_string(steering_angle);
-  std::string txt_vel   = "Vel Ref: " + std::to_string(velocity);
-  
+  std::string txt_vel = "Vel Ref: " + std::to_string(velocity);
+
   // Background box (Top Left)
-  cv::rectangle(img, cv::Point(0, 0), cv::Point(250, 80), cv::Scalar(0,0,0), -1);
-  
+  cv::rectangle(img, cv::Point(0, 0), cv::Point(250, 80), cv::Scalar(0, 0, 0), -1);
+
   // Text
   cv::putText(img, txt_steer, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
-  cv::putText(img, txt_vel,   cv::Point(10, 65), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
+  cv::putText(img, txt_vel, cv::Point(10, 65), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
 }
 
 /**
@@ -735,8 +725,6 @@ int main(int argc, char ** argv)
   rclcpp::shutdown();
   return 0;
 }
-
-
 
 
 // // the version with speed 1.6m/s
@@ -752,7 +740,7 @@ int main(int argc, char ** argv)
 // #include <rclcpp/rclcpp.hpp>
 
 // // --- TF2 Includes (Order is important for linking!) ---
-// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp> 
+// #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 // #include <tf2/LinearMath/Matrix3x3.h>
 // #include <tf2/LinearMath/Quaternion.h>
 // #include <tf2/utils.h>
@@ -849,7 +837,7 @@ int main(int argc, char ** argv)
 //   // --- FIX: Explicit conversion to avoid linker error ---
 //   tf2::Quaternion q;
 //   tf2::fromMsg(msg->pose.pose.orientation, q);
-  
+
 //   // Convert quaternion to yaw (safe method)
 //   double roll, pitch, yaw;
 //   tf2::Matrix3x3(q).getRPY(roll, pitch, yaw);
@@ -901,14 +889,14 @@ int main(int argc, char ** argv)
 //   // --- Visualization Logic ---
 //   if (!current_image_.empty()) {
 //     cv::Mat debug_view = current_image_.clone();
-    
+
 //     // Draw the steering overlay
 //     drawControlOverlay(debug_view, delta, v_cmd);
 
 //     // Convert back to ROS message and publish
-//     sensor_msgs::msg::Image::SharedPtr out_msg = 
+//     sensor_msgs::msg::Image::SharedPtr out_msg =
 //       cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", debug_view).toImageMsg();
-    
+
 //     out_msg->header.stamp = this->now();
 //     out_msg->header.frame_id = "camera_link"; // Adjust if needed
 //     pub_debug_->publish(*out_msg);
@@ -933,8 +921,8 @@ int main(int argc, char ** argv)
 
 //   // 1. Draw Steering Arrow
 //   // Length relative to image height
-//   double arrow_len = h * 0.35; 
-  
+//   double arrow_len = h * 0.35;
+
 //   // Calculate tip position
 //   // delta > 0 is Left Turn. In Image X grows right, so Left is -X.
 //   // We use sin/cos logic:
@@ -945,16 +933,16 @@ int main(int argc, char ** argv)
 //   arrow_tip.y = center_bottom.y - static_cast<int>(arrow_len * std::cos(steering_angle));
 
 //   // Cyan Color (BGR: 255, 255, 0)
-//   cv::Scalar color(255, 255, 0); 
+//   cv::Scalar color(255, 255, 0);
 //   cv::arrowedLine(img, center_bottom, arrow_tip, color, 5, 8, 0, 0.1);
 
 //   // 2. Draw Text Info with background box
 //   std::string txt_steer = "Steer: " + std::to_string(steering_angle);
 //   std::string txt_vel   = "Vel Ref: " + std::to_string(velocity);
-  
+
 //   // Background box (Top Left)
 //   cv::rectangle(img, cv::Point(0, 0), cv::Point(250, 80), cv::Scalar(0,0,0), -1);
-  
+
 //   // Text
 //   cv::putText(img, txt_steer, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
 //   cv::putText(img, txt_vel,   cv::Point(10, 65), cv::FONT_HERSHEY_SIMPLEX, 0.8, color, 2);
@@ -970,4 +958,3 @@ int main(int argc, char ** argv)
 //   rclcpp::shutdown();
 //   return 0;
 // }
-

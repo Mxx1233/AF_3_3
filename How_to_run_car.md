@@ -1,6 +1,13 @@
 # Main How-To:
 
-
+===
+## Update 02-03-2026
+Now you can just start everything with:
+```
+cd Rusty-Racer/wise-2025-26-gruppe-c
+./start.sh
+```
+===
 ## Terminal 1 - Start camera
 ```
 cd ws-template

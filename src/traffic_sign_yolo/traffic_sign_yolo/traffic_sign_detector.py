@@ -1,7 +1,9 @@
-import cv2
-from ultralytics import YOLO
 import time
+
+import cv2
 import numpy as np
+from ultralytics import YOLO
+
 
 # Kein (Node) mehr, dies ist nun eine reine Logik-Klasse
 class TrafficSignDetector:
@@ -10,11 +12,13 @@ class TrafficSignDetector:
         Initialisiert den Traffic Sign Detektor Operator.
 
         Args:
-            model_path (str): Pfad zur YOLO .pt Datei.
-            conf_th (float): Confidence Schwellenwert für die Erkennung.
-            iou_th (float): IoU Schwellenwert für NMS.
-            imgsz (int): Bildgröße für die Inferenz.
-            device (str): Rechengerät ('cpu' oder '0' für GPU).
+        ----
+        model_path (str): Pfad zur YOLO .pt Datei.
+        conf_th (float): Confidence Schwellenwert für die Erkennung.
+        iou_th (float): IoU Schwellenwert für NMS.
+        imgsz (int): Bildgröße für die Inferenz.
+        device (str): Rechengerät ('cpu' oder '0' für GPU).
+
         """
         # 1. Speichern der Konfigurationsparameter
         self.conf_th = conf_th
@@ -24,10 +28,10 @@ class TrafficSignDetector:
 
         # 2. Laden des Modells (Einmalig beim Initialisieren)
         # Dies ist rechenintensiv und sollte nicht im Loop gemacht werden
-        print(f"Lade Modell von: {model_path}")
+        print(f'Lade Modell von: {model_path}')
         self.model = YOLO(model_path)
         # Hinweis: Hier gibt es keine Publisher, Subscriber oder Timer mehr!
-        # Diese Logik-Klasse "wartet" nur darauf, dass eine Funktion aufgerufen wird.
+        # Diese Logik-Klasse 'wartet' nur darauf, dass eine Funktion aufgerufen wird.
 
     def process(self, color_frame, depth_frame):
         """
@@ -37,9 +41,14 @@ class TrafficSignDetector:
             color_frame: RGB-Bild von der Kamera (OpenCV BGR).
             depth_frame: Ausgerichtetes Tiefenbild (16-bit uint, mm).
 
-        Returns:
-            list: Eine Liste mit Dictionaries für jedes erkannte Schild.
-            numpy.ndarray: Das annotierte Debug-Bild.
+        Returns
+        -------
+        dict
+            Dictionary mit folgenden Schlüsseln:
+            - 'detections': Liste mit erkannten Schildern
+            - 'debug_image': Annotiertes Bild
+            - 'infer_ms': Inferenzzeit in ms
+
         """
         # --- Zeitmessung für Inferenz-Statistiken ---
         t_start = time.time()
@@ -52,7 +61,7 @@ class TrafficSignDetector:
             iou=self.iou_th,
             imgsz=self.imgsz,
             device=self.device,
-            verbose=False
+            verbose=False,
         )[0]
 
         # Inferenzzeit in Millisekunden berechnen
@@ -68,8 +77,8 @@ class TrafficSignDetector:
             score = float(b.conf.item())
 
             # --- Berechnung für Detection2D (Original-Format) ---
-            x1, y1, x2, y2 = [float(v) for v in b.xyxy[0].tolist()]
-            cx, cy = (x1 + x2)/2.0, (y1 + y2)/2.0
+            x1, y1, x2, y2 = (float(v) for v in b.xyxy[0].tolist())
+            cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
             w, h = (x2 - x1), (y2 - y1)
 
             # --- Robuste Distanzmessung (Median-Filter) ---
@@ -78,8 +87,8 @@ class TrafficSignDetector:
             h_img, w_img = depth_frame.shape
 
             # Bereich sicherstellen (ROI)
-            y_min, y_max = max(0, iy-1), min(h_img, iy+2)
-            x_min, x_max = max(0, ix-1), min(w_img, ix+2)
+            y_min, y_max = max(0, iy - 1), min(h_img, iy + 2)
+            x_min, x_max = max(0, ix - 1), min(w_img, ix + 2)
 
             depth_roi = depth_frame[y_min:y_max, x_min:x_max]
             # Nur Werte > 0 berücksichtigen
@@ -92,14 +101,16 @@ class TrafficSignDetector:
                 distance_m = -1.0
 
             # 3. Strukturierte Daten sammeln
-            detections_list.append({
-                'class_id': cls_id,
-                'class_name': names[cls_id],
-                'score': score,
-                'bbox_ros': [cx, cy, w, h], # Format für Detection2D
-                'bbox_xyxy': [x1, y1, x2, y2], # Für Zeichnen
-                'distance': distance_m
-            })
+            detections_list.append(
+                {
+                    'class_id': cls_id,
+                    'class_name': names[cls_id],
+                    'score': score,
+                    'bbox_ros': [cx, cy, w, h],  # Format für Detection2D
+                    'bbox_xyxy': [x1, y1, x2, y2],  # Für Zeichnen
+                    'distance': distance_m,
+                }
+            )
 
         # 4. Debug-Bild erstellen
         annotated_frame = results.plot()
@@ -107,12 +118,18 @@ class TrafficSignDetector:
             if det['distance'] > 0:
                 x1, y1, x2, y2 = det['bbox_xyxy']
                 txt = f"{det['distance']:.2f}m"
-                cv2.putText(annotated_frame, txt, (int(x1), int(y1)-5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
-
+                cv2.putText(
+                    annotated_frame,
+                    txt,
+                    (int(x1), int(y1) - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (0, 255, 0),
+                    1,
+                )
 
         return {
             'detections': detections_list,
             'debug_image': annotated_frame,
-            'infer_ms': infer_ms
+            'infer_ms': infer_ms,
         }

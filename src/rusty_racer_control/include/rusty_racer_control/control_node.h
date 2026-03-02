@@ -30,7 +30,7 @@ public:
 
 private:
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  
+
   /**
    * @brief Main control loop (triggered by Lane Deviation)
    */
@@ -45,7 +45,7 @@ private:
   /**
    * @brief Helper to draw the steering arrow on the debug image
    */
-  void drawControlOverlay(cv::Mat& img, double steering_angle, double velocity);
+  void drawControlOverlay(cv::Mat & img, double steering_angle, double velocity);
 
   // Controllers
   std::unique_ptr < LateralController > lateral_controller_;

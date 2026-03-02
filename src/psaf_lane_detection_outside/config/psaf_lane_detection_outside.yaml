@@ -1,3 +1,0 @@
-lane_detection:
-  ros__parameters:
-    update_frequency: 30.0

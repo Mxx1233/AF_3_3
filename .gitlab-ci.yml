@@ -71,7 +71,7 @@ test:
   extends: .skip_experimental
   script:
     - sh ./ci_install.sh
-    - colcon test --abort-on-error --executor sequential --packages-ignore psaf_configuration psaf_launch psaf_firststeps
+    - colcon test --abort-on-error --executor sequential --packages-ignore psaf_configuration psaf_firststeps
     - 'colcon test-result --all |grep xml |cut -d":" -f1 | xargs .gitlab-ci/merge-test-results.py test-results.xml || true'
     - colcon test-result --verbose
   artifacts:
@@ -96,7 +96,7 @@ code:
 
 variables:
   # Packages that should be ignored from build, test, and coverage
-  PACKAGES_TO_IGNORE: "psaf_configuration psaf_launch psaf_firststeps"
+  PACKAGES_TO_IGNORE: "psaf_configuration psaf_firststeps"
   PACKAGES_TO_COVERAGE_IGNORE: "rusty_racer_interfaces"
   # CMake arguments for enabling Gcov/Lcov profiling
 

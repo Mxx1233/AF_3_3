@@ -26,11 +26,11 @@ include_directories(include)
 # --------------------------------------------------------
 add_executable(trajectory_plan src/trajectory_plan.cpp src/trajectory_plan_node.cpp)
 
-ament_target_dependencies(trajectory_plan 
-  rclcpp 
-  psaf_configuration 
-  rusty_racer_interfaces 
-  OpenCV 
+ament_target_dependencies(trajectory_plan
+  rclcpp
+  psaf_configuration
+  rusty_racer_interfaces
+  OpenCV
   std_msgs
   sensor_msgs
   cv_bridge
@@ -44,12 +44,6 @@ install(TARGETS
         DESTINATION lib/${PROJECT_NAME}
 )
 
-install(DIRECTORY
-        launch
-        config
-        DESTINATION share/${PROJECT_NAME}
-)
-
 # --------------------------------------------------------
 # 4. Testing
 # --------------------------------------------------------
@@ -61,12 +55,12 @@ if(BUILD_TESTING)
 
   find_package(ament_cmake_gtest REQUIRED)
   ament_add_gtest(trajectory_plan_test test/trajectory_plan_test.cpp src/trajectory_plan_node.cpp)
-  
-  ament_target_dependencies(trajectory_plan_test 
-    rclcpp 
-    psaf_configuration 
-    OpenCV 
-    rusty_racer_interfaces 
+
+  ament_target_dependencies(trajectory_plan_test
+    rclcpp
+    psaf_configuration
+    OpenCV
+    rusty_racer_interfaces
     std_msgs
     sensor_msgs
     cv_bridge

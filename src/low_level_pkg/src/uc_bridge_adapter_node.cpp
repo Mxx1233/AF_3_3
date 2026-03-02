@@ -13,8 +13,6 @@
 // =======================
 
 // Topics
-#define MOTOR_COMMAND_TOPIC "/motor_command"
-#define SET_STEERING_TOPIC  "/uc_bridge/set_steering"
 #define SET_MOTOR_LEVEL_FORWARD_TOPIC  "/uc_bridge/set_motor_level_forward"
 #define SET_MOTOR_LEVEL_BACKWARD_TOPIC  "/uc_bridge/set_motor_level_backward"
 
@@ -24,17 +22,24 @@ public:
   UcBridgeAdapterNode()
   : rclcpp::Node("uc_bridge_adapter_node")
   {
+    this->declare_parameter("topics.motor_command", "/motor_command");
+    this->declare_parameter("topics.set_steering", "/uc_bridge/set_steering");
+
+    std::string motor_cmd_topic = this->get_parameter("topics.motor_command").as_string();
+    std::string steering_topic = this->get_parameter("topics.set_steering").as_string();
+
     UcMapper::Config config;
+
     mapper_ = std::make_unique<UcMapper>(config);
 
     // Subscriber: MotorCommand (Lenkwinkel [rad], Motorlevel [-1.0..1.0])
     motor_command_sub_ = create_subscription<rusty_racer_interfaces::msg::MotorCommand>(
-      MOTOR_COMMAND_TOPIC, 10,
+      motor_cmd_topic, 10,
       std::bind(&UcBridgeAdapterNode::motorCommandCallback, this, std::placeholders::_1));
 
     // Publisher: Set-Steering (Int16)
     set_steering_pub_ = create_publisher<std_msgs::msg::Int16>(
-      SET_STEERING_TOPIC, 10);
+      steering_topic, 10);
 
     // Publisher: Set-Motor-Level-Forward (Int16)
     set_motor_level_forward_pub_ = create_publisher<std_msgs::msg::Int16>(

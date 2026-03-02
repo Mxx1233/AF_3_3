@@ -979,9 +979,6 @@
 // }
 
 
-
-
-
 // Copyright 2025 Rusty Racer Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -1749,4 +1746,3 @@ int main(int argc, char ** argv)
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
-

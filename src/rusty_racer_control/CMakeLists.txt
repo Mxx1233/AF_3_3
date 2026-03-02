@@ -61,10 +61,6 @@ install(DIRECTORY include/
         DESTINATION include
 )
 
-install (DIRECTORY launch
-	DESTINATION share/${PROJECT_NAME}
-)
-
 # ============================================================================
 # Test-Konfiguration / Testing Configuration
 # ============================================================================

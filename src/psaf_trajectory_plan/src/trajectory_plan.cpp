@@ -3,15 +3,15 @@
 
 int main(int argc, char * argv[])
 {
-    rclcpp::init(argc, argv);
-    std::shared_ptr<TrajectoryPlanNode> node = std::make_shared<TrajectoryPlanNode>();
-    double update_frequency = node->declare_parameter("update_frequency", 125.0);
-    rclcpp::WallRate rate(update_frequency);
+  rclcpp::init(argc, argv);
+  std::shared_ptr<TrajectoryPlanNode> node = std::make_shared<TrajectoryPlanNode>();
+  double update_frequency = node->declare_parameter("update_frequency", 125.0);
+  rclcpp::WallRate rate(update_frequency);
 
-    while (rclcpp::ok()) {
-        rclcpp::spin_some(node);
-        rate.sleep();
-    }
+  while (rclcpp::ok()) {
+    rclcpp::spin_some(node);
+    rate.sleep();
+  }
 
-    rclcpp::shutdown();
+  rclcpp::shutdown();
 }

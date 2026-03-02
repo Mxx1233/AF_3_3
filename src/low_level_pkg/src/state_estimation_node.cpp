@@ -10,54 +10,53 @@
 
 #include "low_level_pkg/state_estimation_core.hpp"
 
-// =======================
-// Einfache Konfiguration
-// =======================
-
-// Topics
-#define ODOM_TOPIC         "/odom"
-#define IMU_TOPIC          "/imu_data"
-#define DT8_TOPIC          "/dt8_data"   // Zeit für eine Radumdrehung
-#define DT_TOPIC          "/dt_data"   // Zeit für eine 1/8*Radumdrehung
-
-// Veröffentlichungsrate
-#define PUBLISH_RATE_HZ    100.0   // Hz (z.B. 50 Hz)
-
 class StateEstimationNode : public rclcpp::Node
 {
 public:
   StateEstimationNode()
   : rclcpp::Node("state_estimation_node")
   {
+    this->declare_parameter("dt_timeout_sec", 0.5);
+    this->declare_parameter("publish_rate", 100.0);
+    this->declare_parameter("topics.odom_topic", "/odom");
+    this->declare_parameter("topics.imu_topic", "/imu_data");
+    this->declare_parameter("topics.dt_topic", "/dt_data");
+
+    double dt_timeout = this->get_parameter("dt_timeout_sec").as_double();
+    double pub_rate = this->get_parameter("publish_rate").as_double();
+    std::string odom_t = this->get_parameter("topics.odom_topic").as_string();
+    std::string imu_t = this->get_parameter("topics.imu_topic").as_string();
+    std::string dt_t = this->get_parameter("topics.dt_topic").as_string();
+
     // Konfiguration der Logik von Core
     StateEstimatorCore::Config cfg;
 
     cfg.wheel_circumference = 0.22;
     cfg.direction_sign = 1;
-    cfg.dt_timeout_sec = 0.5;
+    cfg.dt_timeout_sec = dt_timeout;
 
     estimator_ = std::make_unique<StateEstimatorCore>(cfg);
 
     // Publisher: /odom
-    odom_pub = create_publisher<nav_msgs::msg::Odometry>(ODOM_TOPIC, 10);
+    odom_pub = create_publisher<nav_msgs::msg::Odometry>(odom_t, 10);
 
     // Subscriber: /dt_data
     dt_sub = create_subscription<std_msgs::msg::Float32>(
-      DT_TOPIC, 10,
+      dt_t, 10,
       std::bind(&StateEstimationNode::dtCallback, this, std::placeholders::_1));
 
     // Subscriber: /imu/data
     imu_sub = create_subscription<sensor_msgs::msg::Imu>(
-      IMU_TOPIC, 10,
+      imu_t, 10,
       std::bind(&StateEstimationNode::imuCallback, this, std::placeholders::_1));
 
     // Timer für periodische Integration & Publikation
     timer = create_wall_timer(
-      std::chrono::duration<double>(1.0 / PUBLISH_RATE_HZ),
+      std::chrono::duration<double>(1.0 / pub_rate),
       std::bind(&StateEstimationNode::update, this));
 
     RCLCPP_INFO(get_logger(), "state_estimation_node gestartet (U=%.3f m, rate=%.1f Hz)",
-                cfg.wheel_circumference, PUBLISH_RATE_HZ);
+                cfg.wheel_circumference, pub_rate);
   }
 
 private:

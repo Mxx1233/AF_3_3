@@ -71,7 +71,8 @@ void LaneDetectionOutsideNode::imageCallback(sensor_msgs::msg::Image::SharedPtr 
 }
 
 // Publish function
-void LaneDetectionOutsideNode::publishLaneMarkings(const std::vector<std::vector<cv::Point>> & lane_marking_)
+void LaneDetectionOutsideNode::publishLaneMarkings(
+  const std::vector<std::vector<cv::Point>> & lane_marking_)
 {
   rusty_racer_interfaces::msg::LaneMarking LaneMarking_msg;
 
@@ -188,7 +189,8 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
         binary).toImageMsg();
       binarized_publisher_->publish(*bin_msg);
     } catch (cv_bridge::Exception & e) {
-      RCLCPP_ERROR(this->get_logger(), "cv_bridge exception during binarized publish: %s", e.what());
+      RCLCPP_ERROR(this->get_logger(), "cv_bridge exception during binarized publish: %s",
+        e.what());
     }
   }
 
@@ -293,7 +295,7 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
 
     auto topmost_point = *min_element(
       intersecting_contour.begin(), intersecting_contour.end(),
-      [](const Point & a, const Point & b) { return a.y < b.y; });
+      [](const Point & a, const Point & b) {return a.y < b.y;});
 
     int topmost_x = topmost_point.x;
     int topmost_y = topmost_point.y;
@@ -310,7 +312,8 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
   }
 
   if (!intersecting_contour.empty() &&
-    find(filtered_contours.begin(), filtered_contours.end(), intersecting_contour) == filtered_contours.end())
+    find(filtered_contours.begin(), filtered_contours.end(),
+    intersecting_contour) == filtered_contours.end())
   {
     filtered_contours.push_back(intersecting_contour);
   }
@@ -340,13 +343,14 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
 
       auto max_point = *max_element(
         contour.begin(), contour.end(),
-        [](const Point & a, const Point & b) { return a.y < b.y; });
+        [](const Point & a, const Point & b) {return a.y < b.y;});
       y_max_points.push_back(max_point);
     }
   }
 
   if (!intersecting_contour.empty()) {
-    drawContours(binary_output_right, vector<vector<Point>>{intersecting_contour}, -1, Scalar(255), FILLED);
+    drawContours(binary_output_right, vector<vector<Point>>{intersecting_contour}, -1, Scalar(255),
+      FILLED);
   }
 
   vector<cv::Point> center_lane;
@@ -358,12 +362,13 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
   if (!intersecting_contour.empty()) {
     auto max_y_point = *max_element(
       intersecting_contour.begin(), intersecting_contour.end(),
-      [](const Point & a, const Point & b) { return a.y < b.y; });
+      [](const Point & a, const Point & b) {return a.y < b.y;});
 
     Point right_lane_basepoint = max_y_point;
 
     // [UPDATED] Increased window width to better capture wider right lane
-    right_result = sliding_window_sampling_right_line(binary_output_right, right_lane_basepoint, 90, 50);
+    right_result = sliding_window_sampling_right_line(binary_output_right, right_lane_basepoint, 90,
+      50);
     right_lane = right_result.first;
 
     if (!y_max_points.empty()) {
@@ -371,7 +376,7 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
       std::vector<Point> y_max_points_sorted = y_max_points;
       std::sort(
         y_max_points_sorted.begin(), y_max_points_sorted.end(),
-        [](const Point & a, const Point & b) { return a.y > b.y; });
+        [](const Point & a, const Point & b) {return a.y > b.y;});
 
       if (y_max_points_sorted.size() == 1) {
         center_lane_basepoint = y_max_points_sorted[0];
@@ -379,11 +384,12 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
         std::vector<Point> top_two_y_points = {y_max_points_sorted[0], y_max_points_sorted[1]};
         center_lane_basepoint = *std::max_element(
           top_two_y_points.begin(), top_two_y_points.end(),
-          [](const Point & a, const Point & b) { return a.x < b.x; });
+          [](const Point & a, const Point & b) {return a.x < b.x;});
       }
 
       // [UPDATED] Reduced window width/height to prevent lane jumping
-      center_result = sliding_window_sampling_center_line(binary_output_center, center_lane_basepoint, 60, 15);
+      center_result = sliding_window_sampling_center_line(binary_output_center,
+        center_lane_basepoint, 60, 15);
       center_lane = center_result.first;
     } else {
       center_lane.clear();
@@ -398,7 +404,7 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
       std::vector<Point> y_max_points_sorted = y_max_points;
       std::sort(
         y_max_points_sorted.begin(), y_max_points_sorted.end(),
-        [](const Point & a, const Point & b) { return a.y > b.y; });
+        [](const Point & a, const Point & b) {return a.y > b.y;});
 
       if (y_max_points_sorted.size() == 1) {
         center_lane_basepoint = y_max_points_sorted[0];
@@ -406,10 +412,11 @@ void LaneDetectionOutsideNode::processImageOutercircle(const Mat & img, int padd
         std::vector<Point> top_two_y_points = {y_max_points_sorted[0], y_max_points_sorted[1]};
         center_lane_basepoint = *std::max_element(
           top_two_y_points.begin(), top_two_y_points.end(),
-          [](const Point & a, const Point & b) { return a.x < b.x; });
+          [](const Point & a, const Point & b) {return a.x < b.x;});
       }
 
-      center_result = sliding_window_sampling_center_line(binary_output_center, center_lane_basepoint, 60, 15);
+      center_result = sliding_window_sampling_center_line(binary_output_center,
+        center_lane_basepoint, 60, 15);
       center_lane = center_result.first;
     } else {
       center_lane.clear();

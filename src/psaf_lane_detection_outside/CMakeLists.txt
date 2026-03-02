@@ -37,16 +37,23 @@ endif()
 
 ament_package()
 
-add_executable(lane_detection_outside src/lane_detection_outside.cpp src/lane_detection_outside_node.cpp)
-ament_target_dependencies(lane_detection_outside rclcpp psaf_configuration sensor_msgs OpenCV image_transport cv_bridge rusty_racer_interfaces std_msgs)   #.......  according to dependencies
+add_executable(
+    lane_detection_outside
+    src/lane_detection_outside.cpp
+    src/lane_detection_outside_node.cpp
+)
+ament_target_dependencies(
+    lane_detection_outside
+    rclcpp psaf_configuration
+    sensor_msgs
+    OpenCV
+    image_transport
+    cv_bridge
+    rusty_racer_interfaces
+    std_msgs
+)   #.......  according to dependencies
 install(TARGETS
         lane_detection_outside
 
         DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY
-        launch
-        config
-        DESTINATION share/${PROJECT_NAME}
 )
