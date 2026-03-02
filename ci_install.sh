@@ -12,4 +12,4 @@ apt-get update && apt-get install -y ros-jazzy-foxglove-bridge
 apt-get update && apt-get install -y \
     ros-jazzy-foxglove-bridge \
     python3-pip
-pip install ultralytics --break-system-packages
+pip install ultralytics --ignore-installed --break-system-packages
