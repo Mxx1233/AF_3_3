@@ -14,4 +14,4 @@ apt-get update && apt-get install -y \
     python3-pip
 
 pip install --upgrade pip setuptools
-pip install ultralytics --ignore-installed --break-system-packages
+pip install build ultralytics --ignore-installed --break-system-packages
