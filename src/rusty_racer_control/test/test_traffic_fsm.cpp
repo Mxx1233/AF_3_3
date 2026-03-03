@@ -35,6 +35,11 @@ TrafficParams defaultParams()
   p.start_off_count = 6;
   p.start_stop_lock_dist_m = 0.30f;
   p.same_sign_block_dist_m = 1.0f;
+  // Set delay to 0 for instant mode transitions in unit tests
+  p.s30_start_delay_ms = 0;
+  p.s30_end_delay_ms = 0;
+  p.hw_start_delay_ms = 0;
+  p.hw_end_delay_ms = 0;
   return p;
 }
 
@@ -90,8 +95,9 @@ void unlockGate(TrafficFSM & fsm, TrafficParams & p)
 struct MockMsg { int32_t sign_id; float distance; };
 
 TEST(BasicTest, ToCamFrameValidInt) {
+  TrafficParams p = defaultParams();
   MockMsg msg{4, 1.5f};   // sign_id=4 → stop_sign → Stop
-  auto f = toCamFrame(msg);
+  auto f = toCamFrame(msg, p);
   ASSERT_EQ(f.dets.size(), 1u);
   EXPECT_EQ(f.dets[0].type, SignType::Stop);
   EXPECT_FLOAT_EQ(f.dets[0].distance_m, 1.5f);
@@ -99,17 +105,19 @@ TEST(BasicTest, ToCamFrameValidInt) {
 }
 
 TEST(BasicTest, ToCamFrameInvalidInt) {
-  EXPECT_EQ(toCamFrame(MockMsg{99, 1.5f}).dets.size(), 0u);  // Out-of-range → Unknown
-  EXPECT_EQ(toCamFrame(MockMsg{4, 0.0f}).dets.size(), 0u);   // Zero distance
-  EXPECT_EQ(toCamFrame(MockMsg{4, -1.f}).dets.size(), 0u);   // Negative distance
+  TrafficParams p = defaultParams();
+  EXPECT_EQ(toCamFrame(MockMsg{99, 1.5f}, p).dets.size(), 0u);  // Out-of-range → Unknown
+  EXPECT_EQ(toCamFrame(MockMsg{4, 0.0f}, p).dets.size(), 0u);   // Zero distance
+  EXPECT_EQ(toCamFrame(MockMsg{4, -1.f}, p).dets.size(), 0u);   // Negative distance
 }
 
 // MockStringMsg with string sign_id (matches actual TrafficSign.msg)
 struct MockStringMsg { std::string sign_id; float distance; };
 
 TEST(BasicTest, ToCamFrameValidString) {
+  TrafficParams p = defaultParams();
   MockStringMsg msg{"stop_sign", 1.5f};
-  auto f = toCamFrame(msg);
+  auto f = toCamFrame(msg, p);
   ASSERT_EQ(f.dets.size(), 1u);
   EXPECT_EQ(f.dets[0].type, SignType::Stop);
   EXPECT_FLOAT_EQ(f.dets[0].distance_m, 1.5f);
@@ -117,28 +125,30 @@ TEST(BasicTest, ToCamFrameValidString) {
 }
 
 TEST(BasicTest, ToCamFrameStringAllTypes) {
+  TrafficParams p = defaultParams();
   EXPECT_EQ(
-    toCamFrame(MockStringMsg{"start_zone_speed_limit", 2.0f}).dets[0].type,
+    toCamFrame(MockStringMsg{"start_zone_speed_limit", 2.0f}, p).dets[0].type,
     SignType::Speed30Start);
   EXPECT_EQ(
-    toCamFrame(MockStringMsg{"end_zone_speed_limit", 2.0f}).dets[0].type,
+    toCamFrame(MockStringMsg{"end_zone_speed_limit", 2.0f}, p).dets[0].type,
     SignType::Speed30End);
   EXPECT_EQ(
-    toCamFrame(MockStringMsg{"start_express_way", 2.0f}).dets[0].type,
+    toCamFrame(MockStringMsg{"start_express_way", 2.0f}, p).dets[0].type,
     SignType::HighwayStart);
   EXPECT_EQ(
-    toCamFrame(MockStringMsg{"end_express_way", 2.0f}).dets[0].type,
+    toCamFrame(MockStringMsg{"end_express_way", 2.0f}, p).dets[0].type,
     SignType::HighwayEnd);
   EXPECT_EQ(
-    toCamFrame(MockStringMsg{"yield", 2.0f}).dets[0].type,
+    toCamFrame(MockStringMsg{"yield", 2.0f}, p).dets[0].type,
     SignType::YieldSlow);
 }
 
 TEST(BasicTest, ToCamFrameInvalidString) {
-  EXPECT_EQ(toCamFrame(MockStringMsg{"garbage", 1.5f}).dets.size(), 0u);
-  EXPECT_EQ(toCamFrame(MockStringMsg{"", 1.5f}).dets.size(), 0u);
-  EXPECT_EQ(toCamFrame(MockStringMsg{"stop_sign", 0.0f}).dets.size(), 0u);
-  EXPECT_EQ(toCamFrame(MockStringMsg{"stop_sign", -1.f}).dets.size(), 0u);
+  TrafficParams p = defaultParams();
+  EXPECT_EQ(toCamFrame(MockStringMsg{"garbage", 1.5f}, p).dets.size(), 0u);
+  EXPECT_EQ(toCamFrame(MockStringMsg{"", 1.5f}, p).dets.size(), 0u);
+  EXPECT_EQ(toCamFrame(MockStringMsg{"stop_sign", 0.0f}, p).dets.size(), 0u);
+  EXPECT_EQ(toCamFrame(MockStringMsg{"stop_sign", -1.f}, p).dets.size(), 0u);
 }
 
 // -- Start gate --------------------------------------------------------------
@@ -305,30 +315,34 @@ TEST(DebounceTest, FlickerRejected) {
   EXPECT_FALSE(d.must_stop);   // Debounced, should not trigger
 }
 
-TEST(OneShotTest, NoDuplicateTriggerWithin1m) {
+// One-shot guard: sign stays within same_sign_block_dist_m (1m) during hold
+// → stop_armed_ is never re-armed → no retrigger after hold completes.
+// Once sign moves past d_release (3m), cooldown and one-shot both reset
+// → second approach retriggers.
+TEST(OneShotTest, NoDuplicateTriggerWhileWithin1m) {
   TrafficFSM fsm;
   fsm.reset();
   TrafficParams p = defaultParams();
   // Unlock gate (two-phase)
   unlockGate(fsm, p);
-  // First stop trigger
+  // First approach: trigger stop
   for (int i = 0; i < 5; i++) {
     fsm.step(cam(SignType::Stop, 0.8f), 20, p);
   }
-  // Wait for StopHold to end (3s)
+  // Keep sign at 0.8m during StopHold (3000ms); sign within 1m → not re-armed
   for (int i = 0; i < 160; i++) {
-    fsm.step(cam(SignType::Unknown, 0), 20, p);
+    fsm.step(cam(SignType::Stop, 0.8f), 20, p);
   }
-  // Still within 1m: should NOT re-trigger
+  // Sign still at 0.8m after hold: one-shot guard prevents retrigger
   for (int i = 0; i < 10; i++) {
     auto d = fsm.step(cam(SignType::Stop, 0.8f), 20, p);
     EXPECT_FALSE(d.must_stop);
   }
-  // Move past d_release (3.0m) to clear cooldown
+  // Leave zone: dist > d_release (3m) → re-arms one-shot + clears cooldown
   for (int i = 0; i < 5; i++) {
     fsm.step(cam(SignType::Stop, 3.5f), 20, p);
   }
-  // Approach again (0.8m): should trigger
+  // Second approach at 0.8m: should trigger again
   for (int i = 0; i < 5; i++) {
     fsm.step(cam(SignType::Stop, 0.8f), 20, p);
   }

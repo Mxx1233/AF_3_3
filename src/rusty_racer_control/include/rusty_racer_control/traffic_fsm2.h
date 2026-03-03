@@ -116,6 +116,9 @@ struct TrafficParams
   int on_count = 1;   // 3
   int off_count = 6;  // 3
 
+  int yield_on_count = 3;   // consecutive frames to enter YieldSlow
+  int yield_off_count = 3;  // consecutive frames without yield to exit YieldSlow
+
   float cam_min_valid_dist_m = 0.30f;
   float cam_max_valid_dist_m = 6.00f;
 
@@ -235,6 +238,7 @@ public:
 
     stop_on_count_ = 0;
     yield_on_count_ = 0;
+    yield_off_count_ = 0;
 
     stop_cooldown_ = false;
     yield_cooldown_ = false;
@@ -448,13 +452,21 @@ public:
     // Handle ongoing YieldSlow
     if (action_state_ == ActionState::YieldSlow) {
       if (has_yield && yield_dist <= d_yield_trig_eff) {
+        yield_off_count_ = 0;
         out.must_stop = false;
         out.v_ref_mps = p.v_yield;
         return out;
       } else {
+        yield_off_count_++;
+        if (yield_off_count_ < p.yield_off_count) {
+          out.must_stop = false;
+          out.v_ref_mps = p.v_yield;
+          return out;
+        }
         action_state_ = ActionState::None;
         yield_cooldown_ = true;
         yield_on_count_ = 0;
+        yield_off_count_ = 0;
       }
     }
 
@@ -515,7 +527,7 @@ public:
       } else {
         yield_on_count_ = 0;
       }
-      if (yield_on_count_ >= p.on_count) {
+      if (yield_on_count_ >= p.yield_on_count) {
         action_state_ = ActionState::YieldSlow;
         out.must_stop = false;
         out.v_ref_mps = p.v_yield;
@@ -534,6 +546,20 @@ public:
     out.must_stop = false;
     out.v_ref_mps = v_mode;
     return out;
+  }
+
+  struct FsmDebugInfo {
+    int layer0_gate;
+    int layer1_mode;
+    int layer2_action;
+  };
+
+  FsmDebugInfo getDebugInfo() const {
+      FsmDebugInfo info;
+      info.layer0_gate = gate_locked_ ? (gate_stop_seen_ ? 1 : 0) : 2;
+      info.layer1_mode = static_cast<int>(speed_mode_);
+      info.layer2_action = static_cast<int>(action_state_);
+      return info;
   }
 
 private:
@@ -572,6 +598,7 @@ private:
 
   int stop_on_count_ = 0;
   int yield_on_count_ = 0;
+  int yield_off_count_ = 0;
 
   bool stop_cooldown_ = false;
   bool yield_cooldown_ = false;
@@ -581,6 +608,7 @@ private:
   // One-shot arming flags
   bool stop_armed_ = true;
   bool yield_armed_ = true;
+
 };
 
 #endif  // RUSTY_RACER_CONTROL__TRAFFIC_FSM2_H_

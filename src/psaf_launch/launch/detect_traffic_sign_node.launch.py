@@ -14,6 +14,6 @@ def generate_launch_description():
         executable='detect_traffic_sign_node',
         name='detect_traffic_sign_node',
         parameters=[config_path],
-        output='screen',
+        output='log',
     )
     return LaunchDescription([detect_traffic_sign_node])

@@ -87,7 +87,20 @@ __trajectory_plan = IncludeLaunchDescription(
 
 
 def generate_launch_description():
-    __foxglove_bridge = Node(package='foxglove_bridge', executable='foxglove_bridge')
+    __foxglove_bridge = Node(
+        package='foxglove_bridge', 
+        executable='foxglove_bridge',
+        parameters=[{
+        'send_buffer_limit': 1000000,
+        'use_best_effort_for_images': True,
+    }])
+
+    __multi_preview_node = Node(
+    package='psaf_launch',
+    executable='multi_image_previewer.py', 
+    name='multi_image_previewer',
+    output='screen'
+)
 
     return LaunchDescription(
         [
@@ -102,6 +115,8 @@ def generate_launch_description():
             __lane_detection,
             __trajectory_plan,
             __foxglove_bridge,
+            __multi_preview_node, 
             LogInfo(msg=['System Initialization Done!']),
         ]
     )
+

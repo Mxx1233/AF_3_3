@@ -17,7 +17,7 @@ def generate_launch_description():
                 executable='trajectory_plan',
                 name='trajectory_plan',
                 parameters=[config_path],
-                output='screen',
+                output='log',
             )
         ]
     )

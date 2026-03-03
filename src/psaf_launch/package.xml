@@ -15,6 +15,9 @@
   <exec_depend>low_level_pkg</exec_depend>
   <exec_depend>traffic_sign_yolo</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>image_proc</exec_depend>
+  <exec_depend>compressed_image_transport</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

@@ -73,7 +73,7 @@ ControlNode::ControlNode()
   traffic_params_.conf_th = 0.0f;
   traffic_params_.v_default = 1.15f;
   traffic_params_.v_speed30 = 0.75f;
-  traffic_params_.v_highway = 1.5f;
+  traffic_params_.v_highway = 1.4f;
   traffic_params_.v_yield = 0.3f;
   traffic_params_.d_stop_trigger = 1.0f;
   traffic_params_.d_yield_trigger = 2.0f;
@@ -130,6 +130,17 @@ ControlNode::ControlNode()
   motor_cmd_pub_ = this->create_publisher<rusty_racer_interfaces::msg::MotorCommand>(
     "/motor_command", 10);
 
+  this->declare_parameter("topics.state_info_topic", "/state_info");
+  this->declare_parameter("topics.target_v_topic", "/target_velocity");
+  
+  std::string state_t = this->get_parameter("topics.state_info_topic").as_string();
+  std::string v_t = this->get_parameter("topics.target_v_topic").as_string();
+
+  state_gate_pub_   = this->create_publisher<std_msgs::msg::String>("/fsm/gate", 10);
+  state_mode_pub_   = this->create_publisher<std_msgs::msg::String>("/fsm/mode", 10);
+  state_action_pub_ = this->create_publisher<std_msgs::msg::String>("/fsm/action", 10);
+
+  target_v_pub_ = this->create_publisher<std_msgs::msg::Float32>(v_t, 10);
   // -- Startup log -------------------------------------------------------
   RCLCPP_INFO(this->get_logger(), "=================================");
   RCLCPP_INFO(this->get_logger(), "Control Node Started");
@@ -296,6 +307,21 @@ void ControlNode::laneCallback(
   motor_cmd_pub_->publish(cmd);
 
   last_update_time_ = current_time;
+
+  // -- Publish Debug Info -------------------------------------------------
+  auto fsm_info = traffic_fsm_.getDebugInfo();
+  
+  std::string gate_s = (fsm_info.layer0_gate == 2) ? "OPEN" : (fsm_info.layer0_gate == 1 ? "CONFIRMING" : "LOCKED");
+  std::string mode_s = (fsm_info.layer1_mode == 1) ? "SPEED_30" : (fsm_info.layer1_mode == 2 ? "HIGHWAY" : "DEFAULT");
+  std::string act_s  = (fsm_info.layer2_action == 1) ? "STOPPING" : (fsm_info.layer2_action == 2 ? "YIELDING" : "NONE");
+
+  auto msg_g = std_msgs::msg::String(); msg_g.data = gate_s; state_gate_pub_->publish(msg_g);
+  auto msg_m = std_msgs::msg::String(); msg_m.data = mode_s; state_mode_pub_->publish(msg_m);
+  auto msg_a = std_msgs::msg::String(); msg_a.data = act_s;  state_action_pub_->publish(msg_a);
+
+  auto v_msg = std_msgs::msg::Float32();
+  v_msg.data = static_cast<float>(v_target);
+  target_v_pub_->publish(v_msg);
 }
 
 // =============================================================================

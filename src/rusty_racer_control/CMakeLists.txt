@@ -56,11 +56,7 @@ install(TARGETS
 )
 
 install(DIRECTORY include/
-<<<<<<< HEAD
-        DESTINATION include
-=======
   DESTINATION include
->>>>>>> eabb7b2 (feat: integrate TrafficFSM, simplified controllers, updated interfaces)
 )
 
 # ============================================================================
@@ -108,6 +104,17 @@ if(BUILD_TESTING)
   )
   target_compile_options(test_control_integration PRIVATE -Wall -Wextra)
   set_tests_properties(test_control_integration PROPERTIES TIMEOUT 60)
+
+  # Test 4: Erweiterte Regelungskomponenten-Tests (kein ROS-Abhängigkeit)
+  ament_add_gtest(test_control_node
+    test/test_control_node.cpp
+  )
+  target_include_directories(test_control_node PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+  )
+  target_compile_options(test_control_node PRIVATE -Wall -Wextra)
+  set_tests_properties(test_control_node PROPERTIES TIMEOUT 60)
 endif()
 
 # ============================================================================

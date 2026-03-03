@@ -28,6 +28,8 @@
 // ROS2 headers
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include "std_msgs/msg/string.hpp"
+#include "std_msgs/msg/float32.hpp"
 // Project interface headers
 #include "rusty_racer_interfaces/msg/lane_deviation.hpp"
 #include "rusty_racer_interfaces/msg/motor_command.hpp"
@@ -102,6 +104,10 @@ private:
   rclcpp::Subscription < rusty_racer_interfaces::msg::LaneDeviation > ::SharedPtr lane_sub_;
   rclcpp::Subscription < rusty_racer_interfaces::msg::TrafficSign > ::SharedPtr traffic_sign_sub_;
   rclcpp::Publisher < rusty_racer_interfaces::msg::MotorCommand > ::SharedPtr motor_cmd_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_gate_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_mode_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr state_action_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr target_v_pub_;
 };
 
 #endif  // RUSTY_RACER_CONTROL__CONTROL_NODE_H_

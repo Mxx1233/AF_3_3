@@ -32,7 +32,7 @@ launch:
   ros__parameters:
     lat_kp: 0.75
     lat_ki: 0.15
-    cruise_mode: True
+    cruise_mode: False
     v_ref: 1.15
     
 /detect_traffic_sign_node:
@@ -42,5 +42,5 @@ launch:
     iou_th: 0.45
     imgsz: 512
     device: "cpu"
-    publish_debug_image: True
+    publish_debug_image: False
 

@@ -13,13 +13,21 @@ echo "[INFO] Starting system setup..."
 # ---------------------------------------------------------
 # 1. System Dependencies (APT)
 # ---------------------------------------------------------
-if ! dpkg -l | grep -q ros-$ROS_DISTRO-foxglove-bridge; then
-    echo "[INFO] ros-$ROS_DISTRO-foxglove-bridge not found. Installing..."
-    sudo apt update
-    sudo apt install -y ros-$ROS_DISTRO-foxglove-bridge python3-venv python3-pip
-else
-    echo "[INFO] System dependencies are met."
-fi
+# Check and install system dependencies
+DEPENDENCIES=(
+    "ros-$ROS_DISTRO-foxglove-bridge"
+    "ros-$ROS_DISTRO-image-transport-plugins"
+    "ros-$ROS_DISTRO-topic-tools" 
+    "ros-$ROS_DISTRO-image-proc"
+)
+
+for pkg in "${DEPENDENCIES[@]}"; do
+    if ! dpkg -l | grep -q "$pkg"; then
+        echo "[INFO] $pkg not found. Installing..."
+        sudo apt update
+        sudo apt install -y "$pkg"
+    fi
+done
 
 # ---------------------------------------------------------
 # 2. Python Virtual Environment (VENV)
