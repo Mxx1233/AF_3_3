@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // // // Copyright 2025 Rusty Racer Team
 // // //
 // // // Licensed under the Apache License, Version 2.0 (the "License");
@@ -125,12 +126,27 @@
 // // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // // See the License for the specific language governing permissions and
 // // limitations under the License.
+=======
+// Copyright 2025 Rusty Racer Team
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+>>>>>>> eabb7b2 (feat: integrate TrafficFSM, simplified controllers, updated interfaces)
 
 // /**
 //  * @file lateral_controller.h
-//  * @brief Lateraler PD-Regler mit Vorfilter
+//  * @brief Lateraler PD-Regler mit Curvature Feedforward
 //  * @author zx
-//  * @date 2025-12
+//  * @date 2025-01
 //  */
 
 // #pragma once
@@ -222,6 +238,7 @@
 //   double kd_;   // D-Verstärkung
 // };
 
+
 // Copyright 2025 Rusty Racer Team
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -280,7 +297,7 @@ public:
   /**
    * @brief Berechnet Lenkwinkel aus Querabweichung und Kurswinkel
    * @param y Aktuelle Querabweichung [m]
-   * @param y_target Ziel-Querabweichung [m] (维持的目标横向位置)
+   * @param y_target Ziel-Querabweichung [m] (target lateral position to maintain)
    * @param phi_k Kursabweichung [rad]
    * @return delta Lenkwinkel [rad]
    */

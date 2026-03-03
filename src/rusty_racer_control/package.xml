@@ -15,11 +15,9 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
-  <depend>cv_bridge</depend>
-  <depend>image_transport</depend>
-  <depend>opencv-cmake-modules</depend>
 
   <build_depend>rusty_racer_interfaces</build_depend>
   <exec_depend>rusty_racer_interfaces</exec_depend>

@@ -1,23 +1,24 @@
-# Zweck: Beschreibt die Abweichung des Fahrzeugs von der Mitte der erkannten Fahrspur.
-#        Wird vom Wahrnehmungsknoten veröffentlicht.
+# Lane deviation information
+# Published by lane_detection_node to controller_node
 
-# Standard-Nachrichtenkopf, der einen genauen Zeitstempel und eine Koordinatensystem-ID enthalten muss.
-# stamp: Zeitstempel des Eingabebildes.
-# frame_id: "base_link"
+# Standard message header (contains timestamp and coordinate frame ID)
 std_msgs/Header header
 
-# Laterale Abweichung in Metern (meters).
-# Beschreibt die seitliche Verschiebung des Fahrzeug-Referenzpunktes (Ursprung von base_link)
-# von der Mitte der Fahrspur.
-# Konvention: Ein positiver Wert bedeutet, dass sich das Fahrzeug rechts von der Mitte befindet.
+# Lateral error [m]
+# Description: lateral displacement of the vehicle reference point relative to the lane center
+# Positive = vehicle is to the right of the lane center
+# Negative = vehicle is to the left of the lane center
 float32 lateral_error
 
-# Gierwinkel-Abweichung in Radiant (radians).
-# Beschreibt den Winkel zwischen der Fahrzeugausrichtung (X-Achse von base_link) und der
-# Tangentenrichtung der Fahrspur.
-# Konvention: Ein positiver Wert bedeutet, die Fahrzeugfront zeigt nach rechts von der Fahrspurrichtung.
+# Heading error [rad]
+# Description: angle between the vehicle heading and the lane tangent direction
+# Positive = vehicle heading points to the right of the lane
+# Negative = vehicle heading points to the left of the lane
 float32 heading_error
 
-# (Optionale Implementierung) Geschätzte Krümmung der Fahrspur in 1/Meter.
-# Eine Gerade hat die Krümmung 0.
+# Lane curvature [1/m]
+# Description: curvature of the current lane
+# 0 = straight
+# Positive = right curve
+# Negative = left curve
 float32 curvature

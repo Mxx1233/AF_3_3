@@ -2,21 +2,17 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rusty_racer_interfaces</name>
-  <version>0.0.0</version>
-  <description>Defines all custom messages, services and actions for the Rusty Racer project</description>
-  <maintainer email="shengtao.wen@stud.tu-darmstadt.com">ubuntu</maintainer>
-  <license>TODO: License declaration</license>
+  <version>0.0.1</version>
+  <description>Custom message definitions for Rusty Racer project</description>
+  <maintainer email="zx@tu-darmstadt.de">zx</maintainer>
+  <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   
-  <build_depend>rosidl_default_generators</build_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
-
   <depend>std_msgs</depend>
   
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-  
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>

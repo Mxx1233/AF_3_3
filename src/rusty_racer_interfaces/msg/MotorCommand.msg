@@ -1,20 +1,18 @@
-# Zweck: Definiert den übergeordneten Steuerbefehl, der vom Kontrollknoten an den
-#        Adapterknoten der unteren Ebene gesendet wird.
-# Die Einheiten sind physikalische Einheiten, entkoppelt von der Hardware.
-
-# Standard-Nachrichtenkopf, der einen genauen Zeitstempel und eine Koordinatensystem-ID enthalten muss.
-# stamp: Zeitstempel des Eingabebildes.
-# frame_id: "base_link"
+# Motor control command
+# Published by controller_node to uc_bridge_adapter_node
 std_msgs/Header header
 
-# Gewünschter Lenkwinkel des Servos in Radiant (radians).
-# Konvention: Positive Werte bedeuten eine Rechtskurve, negative eine Linkskurve.
+# Steering angle [rad]
+# Desired steering angle of the servo
+# Positive = turn right
+# Negative = turn left
+# Recommended range: [-0.52, 0.52] (approx. ±30 degrees)
 float32 steering_angle
 
-# Gewünschtes Antriebsniveau des Motors als normalisierter Wert im Bereich [-1.0, 1.0].
-# Konvention:
-#   (0.0, 1.0] -> Vorwärtsbewegung
-#   0.0        -> Null Leistung / Rollen
-#   [-1.0, 0.0) -> Aktives Bremsen oder Rückwärtsfahrt.
-# Für die erste Phase verwenden wir nur den Bereich [0.0, 1.0].
+# Motor control level
+# Normalized motor drive signal, range [-1.0, 1.0]
+# (0.0, 1.0]  -> forward (throttle)
+#  0.0        -> stop / neutral
+# [-1.0, 0.0) -> reverse or active braking
+# Note: phase 1 uses only the [0.0, 1.0] range
 float32 motor_level
