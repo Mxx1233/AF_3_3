@@ -442,6 +442,10 @@ public:
         action_elapsed_ms_ = 0;
         stop_cooldown_ = true;
         stop_on_count_ = 0;
+        // Reset speed mode to Default on every (non-first) stop completion,
+        // ensuring highway mode does not persist if end sign was missed.
+        speed_mode_ = SpeedMode::Default;
+        prev_mode_ = SpeedMode::Default;
       } else {
         out.must_stop = true;
         out.v_ref_mps = 0.0f;
